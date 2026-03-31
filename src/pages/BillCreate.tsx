@@ -396,15 +396,16 @@ export default function BillCreate({ roomIdProp, onClose, isModal }: BillCreateP
                         </Box>
                         
                         <Box sx={{ ml: isSystem ? 2 : 0, display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <TextField
-                            label="Số lượng"
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) => updateCustomItem(customIndex, 'quantity', Number(e.target.value))}
-                            size="small"
-                            disabled={isSystem}
-                            sx={{ width: 80, ...(isSystem && { '& .MuiInputBase-input.Mui-disabled': { WebkitTextFillColor: theme.palette.text.primary, fontWeight: 600 } }) }}
-                          />
+                          {!isSystem && (
+                            <TextField
+                              label="Số lượng"
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => updateCustomItem(customIndex, 'quantity', Number(e.target.value))}
+                              size="small"
+                              sx={{ width: 80 }}
+                            />
+                          )}
                           <TextField
                             label="Đơn giá"
                             name={`unitPrice-${index}`}
@@ -415,6 +416,13 @@ export default function BillCreate({ roomIdProp, onClose, isModal }: BillCreateP
                             disabled={isSystem}
                             sx={{ width: 140, ...(isSystem && { '& .MuiInputBase-input.Mui-disabled': { WebkitTextFillColor: theme.palette.text.primary, fontWeight: 600 } }) }}
                           />
+                          
+                          {isSystem && (
+                             <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
+                               × {item.quantity} {item.itemType === 'electricity' ? 'ký' : item.itemType === 'water' ? 'khối' : 'lượng'}
+                             </Typography>
+                          )}
+
                           {!isSystem && (
                              <Typography variant="body2" sx={{ fontWeight: 700, color: theme.palette.primary.main, ml: 'auto' }}>
                                = {formatCurrency(item.amount)}

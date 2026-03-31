@@ -421,7 +421,7 @@ export default function BillCreate({ roomIdProp, onClose, isModal }: BillCreateP
                           />
                         </Grid>
                         <Grid size={{ xs: 10, sm: 2 }} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-                           <Typography variant="body1" sx={{ fontWeight: 800, textAlign: 'right', color: theme.palette.primary.main }}>
+                           <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'right', color: theme.palette.primary.main }}>
                             = {formatCurrency(item.amount)}
                            </Typography>
                         </Grid>

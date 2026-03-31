@@ -22,6 +22,7 @@ import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import CloseIcon from '@mui/icons-material/Close';
 import { PageHeader, ConfirmDialog, NumericFormatCustom } from '../components/common';
 import { APP_VERSION, DEFAULT_ELECTRICITY_RATE, DEFAULT_WATER_RATE } from '../utils/constants';
 import { useSettingsStore } from '../stores/settingsStore';
@@ -278,7 +279,10 @@ export default function Settings() {
 
       {/* Edit Service Dialog */}
       <Dialog open={serviceDialog} onClose={() => setServiceDialog(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>{editingServiceId ? 'Sửa dịch vụ' : 'Thêm dịch vụ'}</DialogTitle>
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {editingServiceId ? 'Sửa dịch vụ' : 'Thêm dịch vụ'}
+          <IconButton onClick={() => setServiceDialog(false)} size="small"><CloseIcon /></IconButton>
+        </DialogTitle>
         <DialogContent sx={{ pt: '16px !important' }}>
           <TextField
             label="Tên dịch vụ *"

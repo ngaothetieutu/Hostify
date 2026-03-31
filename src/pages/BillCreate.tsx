@@ -17,6 +17,7 @@ import {
 import SaveIcon from '@mui/icons-material/Save';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
+import CloseIcon from '@mui/icons-material/Close';
 import { PageHeader, NumericFormatCustom } from '../components/common';
 import { useRoomStore } from '../stores/roomStore';
 import { useBuildingStore } from '../stores/buildingStore';
@@ -224,7 +225,15 @@ export default function BillCreate({ roomIdProp, onClose, isModal }: BillCreateP
   const totalAmount = allItems.reduce((sum, item) => sum + item.amount, 0);
 
   return (
-    <Box>
+    <Box sx={{ position: 'relative' }}>
+      {isModal && onClose && (
+        <IconButton 
+          onClick={onClose} 
+          sx={{ position: 'absolute', top: -8, right: 0, zIndex: 10 }}
+        >
+          <CloseIcon />
+        </IconButton>
+      )}
       <PageHeader
         title="➕ Tạo hóa đơn"
         subtitle="Tính toán tiền phòng & điện nước tự động"

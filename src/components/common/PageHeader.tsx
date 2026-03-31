@@ -30,7 +30,7 @@ export default function PageHeader({ title, subtitle, action }: PageHeaderProps)
           </Typography>
         )}
       </Box>
-      {action && <Box>{action}</Box>}
+      {action && <Box sx={{ width: { xs: '100%', sm: 'auto' } }}>{action}</Box>}
     </Box>
   );
 }

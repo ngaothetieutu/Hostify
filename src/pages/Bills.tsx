@@ -121,9 +121,9 @@ export default function Bills() {
       }
       
       await fetchBills();
-    } catch (e) {
+    } catch (e: any) {
       console.error("Lỗi tạo hóa đơn tháng:", e);
-      alert("Có lỗi xảy ra khi tạo hóa đơn hàng tháng!");
+      alert(`Có lỗi xảy ra khi tạo HĐ (${e.message || 'Lỗi không xác định'})`);
     } finally {
       setGeneratingMonth(false);
     }
@@ -201,36 +201,52 @@ export default function Bills() {
         title="💰 Hóa đơn"
         subtitle={`${bills.length} hóa đơn đã tạo`}
         action={
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-            <Button 
-              variant="outlined" 
-              color="info"
-              startIcon={<ContentCopyIcon />} 
-              onClick={handleCopyList}
-            >
-              Copy DS
-            </Button>
-            <Button 
-              variant="outlined" 
-              color="primary"
-              startIcon={<CameraAltIcon />} 
-              onClick={handleCaptureList}
-            >
-              Chụp DS
-            </Button>
-            <Button 
-              variant="outlined" 
-              color="secondary"
-              startIcon={generatingMonth ? <CircularProgress size={20} /> : <FlashOnIcon />} 
-              onClick={handleGenerateMonthBills}
-              disabled={generatingMonth}
-            >
-              Tạo HĐ tháng
-            </Button>
-            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateDialogOpen(true)}>
-              Tạo HĐ
-            </Button>
-          </Box>
+          <Grid container spacing={1} sx={{ width: '100%' }}>
+            <Grid size={{ xs: 6, sm: 'auto' }}>
+              <Button 
+                variant="outlined" 
+                color="info"
+                startIcon={<ContentCopyIcon />} 
+                onClick={handleCopyList}
+                fullWidth
+              >
+                Copy DS
+              </Button>
+            </Grid>
+            <Grid size={{ xs: 6, sm: 'auto' }}>
+              <Button 
+                variant="outlined" 
+                color="primary"
+                startIcon={<CameraAltIcon />} 
+                onClick={handleCaptureList}
+                fullWidth
+              >
+                Chụp ảnh
+              </Button>
+            </Grid>
+            <Grid size={{ xs: 6, sm: 'auto' }}>
+              <Button 
+                variant="outlined" 
+                color="secondary"
+                startIcon={generatingMonth ? <CircularProgress size={20} /> : <FlashOnIcon />} 
+                onClick={handleGenerateMonthBills}
+                disabled={generatingMonth}
+                fullWidth
+              >
+                {generatingMonth ? 'Đang tạo...' : 'Tạo tự động'}
+              </Button>
+            </Grid>
+            <Grid size={{ xs: 6, sm: 'auto' }}>
+              <Button 
+                variant="contained" 
+                startIcon={<AddIcon />} 
+                onClick={() => setCreateDialogOpen(true)}
+                fullWidth
+              >
+                Tạo Hóa Đơn
+              </Button>
+            </Grid>
+          </Grid>
         }
       />
 

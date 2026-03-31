@@ -5,7 +5,9 @@ import {
   DialogContentText,
   DialogActions,
   Button,
+  IconButton,
 } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -30,7 +32,12 @@ export default function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <Dialog open={open} onClose={onCancel} maxWidth="xs" fullWidth>
-      <DialogTitle sx={{ fontWeight: 700 }}>{title}</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 700, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {title}
+        <IconButton onClick={onCancel} size="small" sx={{ color: 'text.secondary' }}>
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
       <DialogContent>
         <DialogContentText>{message}</DialogContentText>
       </DialogContent>

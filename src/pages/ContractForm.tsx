@@ -165,7 +165,7 @@ export default function ContractForm() {
     buildings.find((b) => b.id === buildingId)?.name ?? '';
 
   return (
-    <Box>
+    <Box sx={{ pb: { xs: 10, md: 4 } }}>
       <PageHeader
         title={editContractId ? "✏️ Sửa hợp đồng" : "📝 Tạo hợp đồng"}
         subtitle="Quản lý khách thuê và dịch vụ phòng"
@@ -215,7 +215,7 @@ export default function ContractForm() {
               />
 
               <Grid container spacing={2} sx={{ mb: 2.5 }}>
-                <Grid size={{ xs: 6 }}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     label="Ngày bắt đầu"
                     type="date"
@@ -224,7 +224,7 @@ export default function ContractForm() {
                     fullWidth
                   />
                 </Grid>
-                <Grid size={{ xs: 6 }}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     label="Ngày kết thúc"
                     type="date"
@@ -236,7 +236,7 @@ export default function ContractForm() {
               </Grid>
 
               <Grid container spacing={2} sx={{ mb: 2.5 }}>
-                <Grid size={{ xs: 6 }}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     label="Tiền cọc (VNĐ)"
                     name="deposit"
@@ -246,7 +246,7 @@ export default function ContractForm() {
                     fullWidth
                   />
                 </Grid>
-                <Grid size={{ xs: 6 }}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     label="Số người ở"
                     value={numberOfTenants}
@@ -259,7 +259,7 @@ export default function ContractForm() {
 
               {!editContractId && (
                 <Grid container spacing={2} sx={{ mb: 2.5 }}>
-                  <Grid size={{ xs: 6 }}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <TextField
                       label="Số điện ban đầu"
                       value={initialElectricity}
@@ -268,7 +268,7 @@ export default function ContractForm() {
                       fullWidth
                     />
                   </Grid>
-                  <Grid size={{ xs: 6 }}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <TextField
                       label="Số nước ban đầu"
                       value={initialWater}
@@ -384,8 +384,8 @@ export default function ContractForm() {
           </Card>
 
           {/* Actions */}
-          <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
-            <Button variant="outlined" onClick={() => navigate(-1)} sx={{ flex: 1 }}>
+          <Box sx={{ display: 'flex', gap: 2, mt: 3, mb: 1 }}>
+            <Button variant="outlined" onClick={() => navigate(-1)} sx={{ flex: 1, py: 1.5 }}>
               Hủy
             </Button>
             <Button
@@ -393,7 +393,7 @@ export default function ContractForm() {
               onClick={handleSave}
               disabled={saving}
               startIcon={<SaveIcon />}
-              sx={{ flex: 1 }}
+              sx={{ flex: 1, py: 1.5 }}
             >
               {saving ? 'Đang lưu...' : editContractId ? 'Lưu thay đổi' : 'Tạo hợp đồng'}
             </Button>

@@ -24,6 +24,7 @@ import {
   Grid,
   Chip,
   Alert,
+  IconButton,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
@@ -32,6 +33,7 @@ import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PersonIcon from '@mui/icons-material/Person';
+import CloseIcon from '@mui/icons-material/Close';
 import PhoneIcon from '@mui/icons-material/Phone';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import GridViewIcon from '@mui/icons-material/GridView';
@@ -457,8 +459,9 @@ export default function Rooms() {
 
       {/* ─── Building Dialog ─── */}
       <Dialog open={buildingDialogOpen} onClose={handleCloseBuildingDialog} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontWeight: 700 }}>
+        <DialogTitle sx={{ fontWeight: 700, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           {editingBuildingId ? '✏️ Sửa tòa nhà' : '🏢 Thêm tòa nhà'}
+          <IconButton onClick={handleCloseBuildingDialog} size="small"><CloseIcon /></IconButton>
         </DialogTitle>
         <DialogContent sx={{ pt: '16px !important' }}>
           <TextField

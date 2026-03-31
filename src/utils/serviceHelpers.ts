@@ -18,7 +18,7 @@ export function parseContractServices(servicesJson: string): ContractService[] {
 export function getDefaultContractServices(serviceTypes: AppServiceType[]): ContractService[] {
   return serviceTypes.map((s) => ({
     serviceId: s.id,
-    enabled: false,
+    enabled: true,
     price: s.defaultPrice,
   }));
 }

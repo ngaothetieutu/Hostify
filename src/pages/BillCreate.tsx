@@ -368,71 +368,61 @@ export default function BillCreate({ roomIdProp, onClose, isModal }: BillCreateP
                     const isSystem = item.itemType !== 'other'; // Prevent editing standard items
                     const customIndex = index - systemItems.length;
                     return (
-                      <Grid container spacing={2} sx={{ mb: 2, alignItems: 'center' }} key={index}>
-                        <Grid size={{ xs: 12, sm: 4 }}>
-                          <TextField
-                            label="Nội dung"
-                            value={item.description}
-                            onChange={(e) => updateCustomItem(customIndex, 'description', e.target.value)}
-                            fullWidth
-                            size="small"
-                            disabled={isSystem}
-                            sx={isSystem ? {
-                              '& .MuiInputBase-input.Mui-disabled': {
-                                WebkitTextFillColor: theme.palette.primary.main,
-                                fontWeight: 700,
-                              }
-                            } : {}}
-                          />
-                        </Grid>
-                        <Grid size={{ xs: 4, sm: 2 }}>
+                      <Box key={index} sx={{ mb: 3 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                          {isSystem ? (
+                            <Typography variant="body1" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
+                              {item.description}
+                            </Typography>
+                          ) : (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
+                              <TextField
+                                label="Nội dung"
+                                value={item.description}
+                                onChange={(e) => updateCustomItem(customIndex, 'description', e.target.value)}
+                                size="small"
+                                sx={{ flex: 1 }}
+                              />
+                              <IconButton color="error" size="small" onClick={() => removeCustomItem(customIndex)}>
+                                <DeleteIcon />
+                              </IconButton>
+                            </Box>
+                          )}
+                          {isSystem && (
+                             <Typography variant="body1" sx={{ fontWeight: 800, color: theme.palette.primary.main, ml: 2, flexShrink: 0 }}>
+                              {formatCurrency(item.amount)}
+                             </Typography>
+                          )}
+                        </Box>
+                        
+                        <Box sx={{ ml: isSystem ? 2 : 0, display: 'flex', alignItems: 'center', gap: 1 }}>
                           <TextField
                             label="Số lượng"
                             type="number"
                             value={item.quantity}
                             onChange={(e) => updateCustomItem(customIndex, 'quantity', Number(e.target.value))}
-                            fullWidth
                             size="small"
                             disabled={isSystem}
-                            sx={isSystem ? {
-                              '& .MuiInputBase-input.Mui-disabled': {
-                                WebkitTextFillColor: theme.palette.primary.main,
-                                fontWeight: 700,
-                              }
-                            } : {}}
+                            sx={{ width: 80, ...(isSystem && { '& .MuiInputBase-input.Mui-disabled': { WebkitTextFillColor: theme.palette.text.primary, fontWeight: 600 } }) }}
                           />
-                        </Grid>
-                        <Grid size={{ xs: 8, sm: 3 }}>
                           <TextField
                             label="Đơn giá"
                             name={`unitPrice-${index}`}
                             value={item.unitPrice}
                             onChange={(e) => updateCustomItem(customIndex, 'unitPrice', Number(e.target.value))}
                             InputProps={{ inputComponent: NumericFormatCustom as any }}
-                            fullWidth
                             size="small"
                             disabled={isSystem}
-                            sx={isSystem ? {
-                              '& .MuiInputBase-input.Mui-disabled': {
-                                WebkitTextFillColor: theme.palette.primary.main,
-                                fontWeight: 700,
-                              }
-                            } : {}}
+                            sx={{ width: 140, ...(isSystem && { '& .MuiInputBase-input.Mui-disabled': { WebkitTextFillColor: theme.palette.text.primary, fontWeight: 600 } }) }}
                           />
-                        </Grid>
-                        <Grid size={{ xs: 10, sm: 2 }} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-                           <Typography variant="body2" sx={{ fontWeight: 700, textAlign: 'right', color: theme.palette.primary.main }}>
-                            = {formatCurrency(item.amount)}
-                           </Typography>
-                        </Grid>
-                        <Grid size={{ xs: 2, sm: 1 }} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                           {!isSystem && (
-                            <IconButton color="error" size="small" onClick={() => removeCustomItem(customIndex)}>
-                              <DeleteIcon />
-                            </IconButton>
+                             <Typography variant="body2" sx={{ fontWeight: 700, color: theme.palette.primary.main, ml: 'auto' }}>
+                               = {formatCurrency(item.amount)}
+                             </Typography>
                           )}
-                        </Grid>
-                      </Grid>
+                        </Box>
+                        <Divider sx={{ mt: 3, display: index === allItems.length - 1 ? 'none' : 'block' }} />
+                      </Box>
                     );
                   })}
 

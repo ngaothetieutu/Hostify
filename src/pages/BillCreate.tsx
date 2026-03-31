@@ -402,7 +402,7 @@ export default function BillCreate({ roomIdProp, onClose, isModal }: BillCreateP
                             } : {}}
                           />
                         </Grid>
-                        <Grid size={{ xs: 4, sm: 3 }}>
+                        <Grid size={{ xs: 8, sm: 3 }}>
                           <TextField
                             label="Đơn giá"
                             name={`unitPrice-${index}`}
@@ -420,12 +420,12 @@ export default function BillCreate({ roomIdProp, onClose, isModal }: BillCreateP
                             } : {}}
                           />
                         </Grid>
-                        <Grid size={{ xs: 4, sm: 2 }}>
+                        <Grid size={{ xs: 10, sm: 2 }} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
                            <Typography variant="body1" sx={{ fontWeight: 800, textAlign: 'right', color: theme.palette.primary.main }}>
-                            {formatCurrency(item.amount)}
+                            = {formatCurrency(item.amount)}
                            </Typography>
                         </Grid>
-                        <Grid size={{ xs: 12, sm: 1 }} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <Grid size={{ xs: 2, sm: 1 }} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                           {!isSystem && (
                             <IconButton color="error" size="small" onClick={() => removeCustomItem(customIndex)}>
                               <DeleteIcon />

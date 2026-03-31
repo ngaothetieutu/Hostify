@@ -172,17 +172,17 @@ export default function BillDetail({ idProp, onClose, isModal }: BillDetailProps
               {/* Items List */}
               <Box sx={{ mb: 4 }}>
                 <Grid container sx={{ mb: 1 }}>
-                  <Grid size={{ xs: 6 }}><Typography variant="body2" sx={{ fontWeight: 600, color: theme.palette.text.secondary }}>Nội dung</Typography></Grid>
-                  <Grid size={{ xs: 2 }}><Typography variant="body2" sx={{ fontWeight: 600, color: theme.palette.text.secondary, textAlign: 'center' }}>SL</Typography></Grid>
-                  <Grid size={{ xs: 2 }}><Typography variant="body2" sx={{ fontWeight: 600, color: theme.palette.text.secondary, textAlign: 'right' }}>Đơn giá</Typography></Grid>
-                  <Grid size={{ xs: 2 }}><Typography variant="body2" sx={{ fontWeight: 600, color: theme.palette.text.secondary, textAlign: 'right' }}>Thành tiền</Typography></Grid>
+                  <Grid size={{ xs: 4, sm: 5 }}><Typography variant="caption" sx={{ fontWeight: 600, color: theme.palette.text.secondary }}>Nội dung</Typography></Grid>
+                  <Grid size={{ xs: 2, sm: 1 }}><Typography variant="caption" sx={{ fontWeight: 600, color: theme.palette.text.secondary, display: 'block', textAlign: 'center' }}>SL</Typography></Grid>
+                  <Grid size={{ xs: 3, sm: 3 }}><Typography variant="caption" sx={{ fontWeight: 600, color: theme.palette.text.secondary, display: 'block', textAlign: 'right' }}>Đơn giá</Typography></Grid>
+                  <Grid size={{ xs: 3, sm: 3 }}><Typography variant="caption" sx={{ fontWeight: 600, color: theme.palette.text.secondary, display: 'block', textAlign: 'right' }}>Thành tiền</Typography></Grid>
                 </Grid>
                 {items.map((item, idx) => (
-                  <Grid container key={idx} sx={{ mb: 1, alignItems: 'center' }}>
-                    <Grid size={{ xs: 6 }}><Typography variant="body2">{item.description}</Typography></Grid>
-                    <Grid size={{ xs: 2 }}><Typography variant="body2" sx={{ textAlign: 'center' }}>{item.quantity}</Typography></Grid>
-                    <Grid size={{ xs: 2 }}><Typography variant="body2" sx={{ textAlign: 'right' }}>{formatCurrency(item.unitPrice)}</Typography></Grid>
-                    <Grid size={{ xs: 2 }}><Typography variant="body2" sx={{ fontWeight: 600, textAlign: 'right' }}>{formatCurrency(item.amount)}</Typography></Grid>
+                  <Grid container key={idx} sx={{ mb: 1.5, alignItems: 'center' }}>
+                    <Grid size={{ xs: 4, sm: 5 }}><Typography variant="caption" component="div" sx={{ lineHeight: 1.2 }}>{item.description}</Typography></Grid>
+                    <Grid size={{ xs: 2, sm: 1 }}><Typography variant="caption" component="div" sx={{ textAlign: 'center' }}>{item.quantity}</Typography></Grid>
+                    <Grid size={{ xs: 3, sm: 3 }}><Typography variant="caption" component="div" sx={{ textAlign: 'right' }}>{formatCurrency(item.unitPrice)}</Typography></Grid>
+                    <Grid size={{ xs: 3, sm: 3 }}><Typography variant="body2" component="div" sx={{ fontWeight: 700, textAlign: 'right', fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>{formatCurrency(item.amount)}</Typography></Grid>
                   </Grid>
                 ))}
               </Box>

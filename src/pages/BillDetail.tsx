@@ -276,7 +276,13 @@ export default function BillDetail({ idProp, onClose, isModal }: BillDetailProps
                 color="error"
                 fullWidth
                 startIcon={<DeleteIcon />}
-                onClick={() => setDeleteBillDialogOpen(true)}
+                onClick={() => {
+                  if (bill.status === 'paid') {
+                    alert('Hóa đơn đã thanh toán không được xóa!');
+                    return;
+                  }
+                  setDeleteBillDialogOpen(true);
+                }}
               >
                 Xóa hóa đơn
               </Button>

@@ -455,7 +455,7 @@ export default function BillCreate({ roomIdProp, onClose, isModal }: BillCreateP
                       startIcon={<SaveIcon />}
                       sx={{ flex: 1, py: 1.5 }}
                     >
-                      {saving ? 'Đang lưu...' : 'Lưu hóa đơn'}
+                      {saving ? 'Đang lưu...' : 'Lưu'}
                     </Button>
                   </Box>
                 </Box>

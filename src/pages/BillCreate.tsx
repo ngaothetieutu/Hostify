@@ -225,7 +225,7 @@ export default function BillCreate({ roomIdProp, onClose, isModal }: BillCreateP
   const totalAmount = allItems.reduce((sum, item) => sum + item.amount, 0);
 
   return (
-    <Box sx={{ position: 'relative' }}>
+    <Box sx={{ position: 'relative', pb: { xs: 10, md: 4 } }}>
       {isModal && onClose && (
         <IconButton 
           onClick={onClose} 
@@ -445,8 +445,8 @@ export default function BillCreate({ roomIdProp, onClose, isModal }: BillCreateP
                     </Typography>
                   </Box>
                   
-                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
-                    <Button variant="outlined" onClick={() => {
+                  <Box sx={{ display: 'flex', gap: 2, mt: 4, pb: 2 }}>
+                    <Button variant="outlined" sx={{ flex: 1, py: 1.5 }} onClick={() => {
                         if (isModal && onClose) onClose();
                         else navigate('/bills');
                     }}>Hủy</Button>
@@ -455,6 +455,7 @@ export default function BillCreate({ roomIdProp, onClose, isModal }: BillCreateP
                       onClick={handleSave}
                       disabled={saving || !roomId || allItems.length === 0}
                       startIcon={<SaveIcon />}
+                      sx={{ flex: 1, py: 1.5 }}
                     >
                       {saving ? 'Đang lưu...' : 'Lưu hóa đơn'}
                     </Button>

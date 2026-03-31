@@ -71,6 +71,8 @@ export default function Bills() {
       const year = dayjs().year();
       const dueDate = dayjs().date(15).format('YYYY-MM-DD');
 
+      let generatedCount = 0;
+
       for (const room of rooms) {
         if (room.status !== 'occupied') continue;
         
@@ -118,9 +120,17 @@ export default function Bills() {
         });
 
         await createBill({ roomId: room.id!, contractId: contract.id, year, month, items: newItems, dueDate });
+        generatedCount++;
       }
       
       await fetchBills();
+
+      if (generatedCount === 0) {
+        alert(`Hoàn tất quét! Không có phòng nào đủ điều kiện để tạo hóa đơn mới (Lý do: Tất cả phòng đang trống, chưa có hợp đồng, hoặc đã có hóa đơn Tháng ${month}/${year}).`);
+      } else {
+        alert(`Tạo thành công ${generatedCount} hóa đơn cho Tháng ${month}!`);
+      }
+
     } catch (e: any) {
       console.error("Lỗi tạo hóa đơn tháng:", e);
       alert(`Có lỗi xảy ra khi tạo HĐ (${e.message || 'Lỗi không xác định'})`);

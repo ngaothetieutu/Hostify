@@ -110,14 +110,43 @@ export default function BillDetail({ idProp, onClose, isModal }: BillDetailProps
     if (!element) return;
     try {
       const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: theme.palette.background.paper });
-      const image = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.href = image;
-      link.download = `HoaDon_P${roomNumber}_T${bill.month}_${bill.year}.png`;
-      link.click();
-    } catch (e) {
+      const filename = `HoaDon_P${roomNumber}_T${bill.month}_${bill.year}.png`;
+      
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          alert("Không thể tạo file ảnh!");
+          return;
+        }
+        
+        const file = new File([blob], filename, { type: 'image/png' });
+        
+        // 1. Try using Web Share API (Works natively on iOS/Android PWA)
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: `Hóa đơn phòng ${roomNumber}`,
+              text: `Gửi hóa đơn tiền nhà phòng ${roomNumber} tháng ${bill.month}/${bill.year}`,
+            });
+            return; // Successfully opened native share menu (where user can "Save Image")
+          } catch (shareError) {
+            console.log("Share cancelled or failed", shareError);
+          }
+        }
+        
+        // 2. Fallback to normal download (Works on PC/Android Chrome)
+        const imageUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = imageUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(imageUrl), 100);
+      }, 'image/png');
+    } catch (e: any) {
       console.error("Lỗi chụp ảnh hóa đơn", e);
-      alert("Lỗi khi chụp ảnh hóa đơn");
+      alert(`Lỗi khi chụp ảnh hóa đơn: ${e.message}`);
     }
   };
 

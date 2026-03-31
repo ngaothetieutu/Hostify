@@ -159,21 +159,47 @@ export default function Bills() {
     const element = document.getElementById('bills-list-print-area');
     if (!element) return;
     try {
-      // Temporarily add a white background for capture
       const canvas = await html2canvas(element, { 
         scale: 2, 
         useCORS: true, 
         backgroundColor: theme.palette.background.paper 
       });
-      const image = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.href = image;
+      
       const title = filterMonth === 'all' ? 'DanhSachHoaDon_TatCa' : `DanhSachHoaDon_Thang_${filterMonth}`;
-      link.download = `${title}.png`;
-      link.click();
-    } catch (e) {
+      const filename = `${title}.png`;
+
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          alert("Không thể tạo file ảnh!");
+          return;
+        }
+
+        const file = new File([blob], filename, { type: 'image/png' });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: "Danh sách hóa đơn",
+            });
+            return;
+          } catch (shareError) {
+            console.log("Share cancelled or failed", shareError);
+          }
+        }
+
+        const imageUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = imageUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(imageUrl), 100);
+      }, 'image/png');
+    } catch (e: any) {
       console.error("Lỗi chụp danh sách", e);
-      alert("Lỗi chụp ảnh danh sách hóa đơn");
+      alert(`Lỗi chụp ảnh danh sách hóa đơn: ${e.message}`);
     }
   };
 

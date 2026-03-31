@@ -14,6 +14,9 @@ interface BillState {
     roomId: number; contractId?: number; year: number; month: number;
     items: Omit<BillItem, 'id' | 'billId'>[]; dueDate?: string;
   }) => Promise<Bill>;
+  updateBill: (id: number, data: {
+    year: number; month: number; items: Omit<BillItem, 'id' | 'billId'>[]; dueDate?: string;
+  }) => Promise<Bill>;
   deleteBill: (id: number) => Promise<void>;
   addPayment: (data: Omit<Payment, 'id' | 'paidAt'>) => Promise<Payment>;
   deletePayment: (paymentId: number, billId: number) => Promise<void>;
@@ -78,6 +81,35 @@ export const useBillStore = create<BillState>((set, get) => ({
 
     await get().fetchBills();
     return newBill;
+  },
+
+  updateBill: async (id, data) => {
+    const totalAmount = data.items.reduce((sum, item) => sum + item.amount, 0);
+    const { data: updatedBill, error } = await supabase.from('bills').update({
+      year: data.year,
+      month: data.month,
+      dueDate: data.dueDate,
+      totalAmount,
+    }).eq('id', id).select().single();
+    if (error) throw error;
+
+    await supabase.from('billItems').delete().eq('billId', id);
+    if (data.items.length > 0) {
+      await supabase.from('billItems').insert(
+        data.items.map((item) => ({ ...item, billId: id }))
+      );
+    }
+
+    const result = await get().getBillById(id);
+    if (result) {
+      const totalPaid = result.payments.reduce((sum, p) => sum + p.amount, 0);
+      const isOverdue = result.bill.dueDate && dayjs().isAfter(dayjs(result.bill.dueDate));
+      const status = totalPaid >= totalAmount ? 'paid' : isOverdue ? 'overdue' : 'unpaid';
+      await supabase.from('bills').update({ status }).eq('id', id);
+    }
+
+    await get().fetchBills();
+    return updatedBill;
   },
 
   deleteBill: async (id) => {

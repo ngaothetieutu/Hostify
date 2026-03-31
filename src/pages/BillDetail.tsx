@@ -23,6 +23,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import PrintIcon from '@mui/icons-material/Print';
 import PaymentIcon from '@mui/icons-material/Payment';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
+import EditIcon from '@mui/icons-material/Edit';
 import html2canvas from 'html2canvas';
 import { StatusBadge, ConfirmDialog, EmptyState, NumericFormatCustom } from '../components/common';
 import { useBillStore } from '../stores/billStore';
@@ -270,6 +271,16 @@ export default function BillDetail({ idProp, onClose, isModal }: BillDetailProps
                 sx={{ mb: 1.5 }}
               >
                 In hóa đơn
+              </Button>
+               <Button
+                variant="outlined"
+                color="info"
+                fullWidth
+                startIcon={<EditIcon />}
+                onClick={() => navigate(`/bills/create?edit=${bill.id}`)}
+                sx={{ mb: 1.5 }}
+              >
+                Sửa hóa đơn
               </Button>
                <Button
                 variant="text"

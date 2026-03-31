@@ -45,11 +45,14 @@ export default function BillCreate({ roomIdProp, onClose, isModal }: BillCreateP
   const { fetchBuildings } = useBuildingStore();
   const { getReading, getPreviousReading, saveReading } = useMeterStore();
   const { getActiveContractForRoom, fetchContracts } = useTenantStore();
-  const { createBill } = useBillStore();
+  const { createBill, updateBill, getBillById } = useBillStore();
   const { serviceTypes } = useSettingsStore();
 
   const initRoomId = roomIdProp || searchParams.get('roomId') || '';
+  const initEditId = searchParams.get('edit') || '';
   const [roomId, setRoomId] = useState<string>(initRoomId);
+  const [editId] = useState<string>(initEditId);
+  
   const [month, setMonth] = useState<number>(dayjs().month() + 1);
   const [year, setYear] = useState<number>(dayjs().year());
   const [dueDate, setDueDate] = useState<string>(dayjs().date(15).format('YYYY-MM-DD'));
@@ -70,6 +73,22 @@ export default function BillCreate({ roomIdProp, onClose, isModal }: BillCreateP
     fetchBuildings();
     fetchContracts();
   }, [fetchRooms, fetchBuildings, fetchContracts]);
+
+  useEffect(() => {
+    async function fetchEditData() {
+      if (!editId) return;
+      const data = await getBillById(parseInt(editId));
+      if (data) {
+        setRoomId(String(data.bill.roomId));
+        setMonth(data.bill.month);
+        setYear(data.bill.year);
+        if (data.bill.dueDate) setDueDate(data.bill.dueDate.split('T')[0]);
+        const custom = data.items.filter(i => i.itemType === 'other');
+        setCustomItems(custom);
+      }
+    }
+    fetchEditData();
+  }, [editId, getBillById]);
 
   // Fetch contract and meter readings when room/month/year changes
   useEffect(() => {
@@ -204,18 +223,27 @@ export default function BillCreate({ roomIdProp, onClose, isModal }: BillCreateP
       });
 
       // Then save the bill
-      await createBill({
-        roomId: parseInt(roomId),
-        contractId,
-        year,
-        month,
-        items: [...systemItems, ...customItems],
-        dueDate,
-      });
+      if (editId) {
+        await updateBill(parseInt(editId), {
+          year,
+          month,
+          items: [...systemItems, ...customItems],
+          dueDate,
+        });
+      } else {
+        await createBill({
+          roomId: parseInt(roomId),
+          contractId,
+          year,
+          month,
+          items: [...systemItems, ...customItems],
+          dueDate,
+        });
+      }
       if (isModal && onClose) onClose();
       else navigate('/bills');
     } catch (e: any) {
-      setError(e.message || 'Lỗi khi tạo hóa đơn');
+      setError(e.message || 'Lỗi khi lưu hóa đơn');
     } finally {
       setSaving(false);
     }
@@ -235,8 +263,8 @@ export default function BillCreate({ roomIdProp, onClose, isModal }: BillCreateP
         </IconButton>
       )}
       <PageHeader
-        title="➕ Tạo hóa đơn"
-        subtitle="Tính toán tiền phòng & điện nước tự động"
+        title={editId ? "✏️ Sửa hóa đơn" : "➕ Tạo hóa đơn"}
+        subtitle={editId ? "Chỉnh sửa hóa đơn điện nước" : "Tính toán tiền phòng & điện nước tự động"}
       />
 
       <Grid container spacing={3}>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import {
   Box,
@@ -14,8 +15,6 @@ import {
   CardActionArea,
   ToggleButtonGroup,
   ToggleButton,
-  Dialog,
-  DialogContent,
   CircularProgress,
   Snackbar,
   Alert
@@ -37,12 +36,11 @@ import { useSettingsStore } from '../stores/settingsStore';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { calculateServiceFees, parseContractServices } from '../utils/serviceHelpers';
 import type { BillItem } from '../db/database';
-import BillDetail from './BillDetail';
-import BillCreate from './BillCreate';
 import dayjs from 'dayjs';
 
 export default function Bills() {
   const theme = useTheme();
+  const navigate = useNavigate();
 
   const { bills, fetchBills, billItems, createBill } = useBillStore();
   const { rooms, fetchRooms } = useRoomStore();
@@ -54,8 +52,6 @@ export default function Bills() {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterMonth, setFilterMonth] = useState<string>('all');
   const [generatingMonth, setGeneratingMonth] = useState(false);
-  const [selectedBillId, setSelectedBillId] = useState<string | null>(null);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [snackbar, setSnackbar] = useState<{open: boolean, message: string, severity: 'success' | 'warning' | 'error'}>({ open: false, message: '', severity: 'success' });
 
@@ -276,7 +272,7 @@ export default function Bills() {
               <Button 
                 variant="contained" 
                 startIcon={<AddIcon />} 
-                onClick={() => setCreateDialogOpen(true)}
+                onClick={() => navigate('/bills/create')}
                 fullWidth
               >
                 Tạo Hóa Đơn
@@ -357,15 +353,9 @@ export default function Bills() {
           <Grid container spacing={2} id="bills-list-print-area">
             {filteredBills.map((bill) => (
               <Grid size={{ xs: 12, sm: 6, md: 3 }} key={bill.id}>
-                <Card
-                  sx={{
-                    cursor: 'pointer',
-                    '&:hover': { transform: 'translateY(-2px)' },
-                    transition: 'transform 0.2s',
-                  }}
-                >
-                  <CardActionArea onClick={() => setSelectedBillId(String(bill.id))}>
-                    <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                <Card sx={{ '&:hover': { transform: 'translateY(-2px)' }, transition: 'transform 0.2s', opacity: bill.status === 'paid' ? 0.7 : 1 }}>
+                  <CardActionArea onClick={() => navigate(`/bills/${bill.id}`)}>
+                    <CardContent sx={{ pb: '16px !important' }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
                         <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
                           Phòng {getRoomNumber(bill.roomId)}
@@ -399,26 +389,9 @@ export default function Bills() {
         ) : (
           <Box id="bills-list-print-area" sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             {filteredBills.map((bill) => (
-              <Card
-                key={bill.id}
-                elevation={0}
-                sx={{
-                  border: `1px solid ${theme.palette.divider}`,
-                  borderRadius: 1.5,
-                  cursor: 'pointer',
-                  '&:hover': { transform: 'translateX(4px)' },
-                  transition: 'transform 0.2s',
-                }}
-              >
-                <CardActionArea onClick={() => setSelectedBillId(String(bill.id))}>
-                  <CardContent sx={{ 
-                    p: 1.25, 
-                    '&:last-child': { pb: 1.25 }, 
-                    display: 'flex', 
-                    flexDirection: { xs: 'column', md: 'row' }, 
-                    gap: 1.5, 
-                    alignItems: { xs: 'flex-start', md: 'center' }
-                  }}>
+              <Card sx={{ display: 'flex', flexDirection: 'column', opacity: bill.status === 'paid' ? 0.7 : 1, border: `1px solid ${theme.palette.divider}`, borderRadius: 1.5, '&:hover': { bgcolor: 'action.hover', transform: 'translateX(4px)' }, transition: 'transform 0.2s', cursor: 'pointer' }} key={bill.id} elevation={0}>
+                <CardActionArea onClick={() => navigate(`/bills/${bill.id}`)}>
+                  <CardContent sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: { xs: 1.5, md: 3 }, alignItems: { xs: 'stretch', md: 'center' }, py: 1.5, pb: '12px !important' }}>
                     {/* Room & Period */}
                     <Box sx={{ width: { xs: '100%', md: '20%' }, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Box>
@@ -481,54 +454,7 @@ export default function Bills() {
         <EmptyState icon="💰" title="Không tìm thấy hóa đơn" subtitle="Thử thay đổi bộ lọc hoặc tạo hóa đơn mới" />
       )}
 
-      {/* Bill Detail Modal */}
-      <Dialog 
-        open={Boolean(selectedBillId)} 
-        onClose={async () => {
-          setSelectedBillId(null);
-          await fetchBills(); // refresh list after closing in case payment was made
-        }} 
-        maxWidth="lg" 
-        fullWidth
-      >
-        <DialogContent sx={{ p: 0, bgcolor: theme.palette.background.default }}>
-          {selectedBillId && (
-            <Box sx={{ p: 3 }}>
-               <BillDetail 
-                 idProp={String(selectedBillId)} 
-                 isModal={true} 
-                 onClose={() => {
-                   setSelectedBillId(null);
-                   fetchBills();
-                 }} 
-               />
-            </Box>
-          )}
-        </DialogContent>
-      </Dialog>
-      
-      {/* Bill Create Modal */}
-      <Dialog 
-        open={createDialogOpen} 
-        onClose={() => {
-          setCreateDialogOpen(false);
-          fetchBills();
-        }} 
-        maxWidth="lg" 
-        fullWidth
-      >
-        <DialogContent sx={{ p: 0, bgcolor: theme.palette.background.default }}>
-            <Box sx={{ p: 3 }}>
-               <BillCreate 
-                 isModal={true} 
-                 onClose={() => {
-                   setCreateDialogOpen(false);
-                   fetchBills();
-                 }} 
-               />
-            </Box>
-        </DialogContent>
-      </Dialog>
+
 
       <Snackbar 
         open={snackbar.open} 

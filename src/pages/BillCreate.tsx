@@ -18,7 +18,8 @@ import SaveIcon from '@mui/icons-material/Save';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import CloseIcon from '@mui/icons-material/Close';
-import { PageHeader, NumericFormatCustom } from '../components/common';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { NumericFormatCustom } from '../components/common';
 import { useRoomStore } from '../stores/roomStore';
 import { useBuildingStore } from '../stores/buildingStore';
 import { useMeterStore } from '../stores/meterStore';
@@ -262,10 +263,22 @@ export default function BillCreate({ roomIdProp, onClose, isModal }: BillCreateP
           <CloseIcon />
         </IconButton>
       )}
-      <PageHeader
-        title={editId ? "✏️ Sửa hóa đơn" : "➕ Tạo hóa đơn"}
-        subtitle={editId ? "Chỉnh sửa hóa đơn điện nước" : "Tính toán tiền phòng & điện nước tự động"}
-      />
+      
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+        {!isModal && (
+          <IconButton onClick={() => navigate('/bills')}>
+            <ArrowBackIcon />
+          </IconButton>
+        )}
+        <Box sx={{ flex: 1 }}>
+          <Typography variant="h5" sx={{ fontWeight: 800 }}>
+            {editId ? "✏️ Sửa hóa đơn" : "➕ Tạo hóa đơn"}
+          </Typography>
+          <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
+            {editId ? "Chỉnh sửa hóa đơn điện nước" : "Tính toán tiền phòng & điện nước tự động"}
+          </Typography>
+        </Box>
+      </Box>
 
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 4 }}>

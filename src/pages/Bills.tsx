@@ -26,6 +26,8 @@ import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import GridViewIcon from '@mui/icons-material/GridView';
+import EditIcon from '@mui/icons-material/Edit';
+import { IconButton } from '@mui/material';
 import html2canvas from 'html2canvas';
 import { PageHeader, EmptyState } from '../components/common';
 import { useBillStore } from '../stores/billStore';
@@ -376,9 +378,24 @@ export default function Bills() {
                       </Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', mt: 1 }}>
                         <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>Tổng thu:</Typography>
-                        <Typography variant="subtitle2" sx={{ color: theme.palette.primary.main, fontWeight: 800 }}>
-                          {formatCurrency(bill.totalAmount)}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Typography variant="subtitle2" sx={{ color: theme.palette.primary.main, fontWeight: 800 }}>
+                            {formatCurrency(bill.totalAmount)}
+                          </Typography>
+                          {bill.status !== 'paid' && (
+                            <IconButton 
+                              size="small" 
+                              color="info" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/bills/create?edit=${bill.id}`);
+                              }}
+                              sx={{ p: 0.2 }}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          )}
+                        </Box>
                       </Box>
                     </CardContent>
                   </CardActionArea>
@@ -428,9 +445,24 @@ export default function Bills() {
                           <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>Hạn: {formatDate(bill.dueDate)}</Typography>
                         )}
                       </Box>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 800, color: theme.palette.primary.main }}>
-                        {formatCurrency(bill.totalAmount)}
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 800, color: theme.palette.primary.main }}>
+                          {formatCurrency(bill.totalAmount)}
+                        </Typography>
+                        {bill.status !== 'paid' && (
+                          <IconButton 
+                            size="small" 
+                            color="info" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/bills/create?edit=${bill.id}`);
+                            }}
+                            sx={{ p: 0.5 }}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        )}
+                      </Box>
                     </Box>
 
                     {/* Status Desktop */}

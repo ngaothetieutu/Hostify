@@ -14,26 +14,41 @@ import Settings from './pages/Settings';
 import Backup from './pages/Backup';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
+import { useEffect } from 'react';
+import { useAuthStore } from './stores/authStore';
+import Login from './pages/Login';
+import ProtectedRoute from './components/common/ProtectedRoute';
+
 export default function App() {
+  const initializeAuth = useAuthStore(state => state.initializeAuth);
+  
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
   return (
     <GoogleOAuthProvider clientId="899592363752-m95otsotlhm5f94lmssmjud76oe14f2q.apps.googleusercontent.com">
-      <AppLayout>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/rooms" element={<Rooms />} />
-          <Route path="/rooms/create" element={<RoomForm />} />
-          <Route path="/rooms/:id" element={<RoomDetail />} />
-          <Route path="/tenants" element={<Tenants />} />
-          <Route path="/tenants/:id" element={<Tenants />} />
-          <Route path="/contracts/create" element={<ContractForm />} />
-          <Route path="/bills" element={<Bills />} />
-          <Route path="/bills/create" element={<BillCreate />} />
-          <Route path="/bills/:id" element={<BillDetail />} />
-          <Route path="/meters" element={<Meters />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/backup" element={<Backup />} />
-        </Routes>
-      </AppLayout>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        
+        <Route element={<ProtectedRoute />}>
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/rooms" element={<Rooms />} />
+            <Route path="/rooms/create" element={<RoomForm />} />
+            <Route path="/rooms/:id" element={<RoomDetail />} />
+            <Route path="/tenants" element={<Tenants />} />
+            <Route path="/tenants/:id" element={<Tenants />} />
+            <Route path="/contracts/create" element={<ContractForm />} />
+            <Route path="/bills" element={<Bills />} />
+            <Route path="/bills/create" element={<BillCreate />} />
+            <Route path="/bills/:id" element={<BillDetail />} />
+            <Route path="/meters" element={<Meters />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/backup" element={<Backup />} />
+          </Route>
+        </Route>
+      </Routes>
     </GoogleOAuthProvider>
   );
 }

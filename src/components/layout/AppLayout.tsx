@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Outlet } from 'react-router-dom';
 import {
   AppBar,
   Box,
@@ -25,8 +25,10 @@ import PeopleIcon from '@mui/icons-material/People';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import SpeedIcon from '@mui/icons-material/Speed';
 import SettingsIcon from '@mui/icons-material/Settings';
+import LogoutIcon from '@mui/icons-material/Logout';
 import InstallPrompt from '../pwa/InstallPrompt';
 import { DRAWER_WIDTH } from '../../utils/constants';
+import { useAuthStore } from '../../stores/authStore';
 
 const navItems = [
   { path: '/', label: 'Tổng quan', icon: <DashboardIcon /> },
@@ -37,11 +39,7 @@ const navItems = [
   { path: '/settings', label: 'Cài đặt', icon: <SettingsIcon /> },
 ];
 
-interface AppLayoutProps {
-  children: React.ReactNode;
-}
-
-export default function AppLayout({ children }: AppLayoutProps) {
+export default function AppLayout() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -60,7 +58,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   };
 
   const drawerContent = (
-    <Box sx={{ pt: 2 }}>
+    <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Logo area */}
       <Box
         sx={{
@@ -128,6 +126,26 @@ export default function AppLayout({ children }: AppLayoutProps) {
           );
         })}
       </List>
+
+      {/* Logout button */}
+      <Box sx={{ mt: 'auto', p: 2, pt: 0 }}>
+        <ListItemButton
+          onClick={() => useAuthStore.getState().signOut()}
+          sx={{
+            borderRadius: 2,
+            color: theme.palette.error.main,
+            '&:hover': { bgcolor: `${theme.palette.error.main}14` },
+          }}
+        >
+          <ListItemIcon sx={{ minWidth: 40, color: 'inherit' }}>
+            <LogoutIcon />
+          </ListItemIcon>
+          <ListItemText
+            primary="Đăng xuất"
+            primaryTypographyProps={{ fontWeight: 600, fontSize: '0.9rem' }}
+          />
+        </ListItemButton>
+      </Box>
     </Box>
   );
 
@@ -212,7 +230,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             overflow: 'auto',
           }}
         >
-          {children}
+          <Outlet />
         </Box>
 
         {/* ─── Mobile Bottom Nav ─── */}

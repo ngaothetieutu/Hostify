@@ -460,7 +460,7 @@ export default function BillCreate({ roomIdProp, onClose, isModal }: BillCreateP
                           
                           {isSystem && (
                              <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
-                               × {item.quantity} {item.itemType === 'electricity' ? 'ký' : item.itemType === 'water' ? 'khối' : 'lượng'}
+                               × {item.quantity} {item.itemType === 'electricity' ? 'kWh' : item.itemType === 'water' ? 'khối' : ''}
                              </Typography>
                           )}
 

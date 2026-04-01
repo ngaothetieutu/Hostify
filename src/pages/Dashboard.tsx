@@ -126,10 +126,9 @@ export default function Dashboard() {
         </Typography>
       </Box>
 
-      {/* ─── Summary Cards ─── */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{ xs: 6, sm: 6, md: 3 }}>
-          <SummaryCard title="Tổng phòng" value={totalRooms} icon="🏠" color="#0EA5E9" />
+          <SummaryCard title="Tổng phòng" value={totalRooms} icon="🏠" color="#0EA5E9" onClick={() => navigate('/rooms')} />
         </Grid>
         <Grid size={{ xs: 6, sm: 6, md: 3 }}>
           <SummaryCard title="Phòng trống" value={vacantRooms} icon="🔑" color="#10B981" />

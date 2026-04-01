@@ -5,19 +5,24 @@ interface SummaryCardProps {
   value: string | number;
   icon: React.ReactNode;
   color?: string;
+  onClick?: () => void;
 }
 
-export default function SummaryCard({ title, value, icon, color = '#0EA5E9' }: SummaryCardProps) {
+export default function SummaryCard({ title, value, icon, color = '#0EA5E9', onClick }: SummaryCardProps) {
   const theme = useTheme();
 
   return (
     <Card
+      onClick={onClick}
       sx={{
         flex: 1,
         minWidth: 140,
         bgcolor: theme.palette.background.paper,
         position: 'relative',
         overflow: 'hidden',
+        cursor: onClick ? 'pointer' : 'default',
+        transition: 'transform 0.2s',
+        '&:hover': onClick ? { transform: 'translateY(-2px)' } : {},
         '&::before': {
           content: '""',
           position: 'absolute',

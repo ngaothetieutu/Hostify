@@ -1,15 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Card, Typography, TextField, Button, CircularProgress, useTheme } from '@mui/material';
 import { supabase } from '../db/supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
 import { useAuthStore } from '../stores/authStore';
+import LockIcon from '@mui/icons-material/Lock';
 
 export default function Login() {
   const theme = useTheme();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [pin, setPin] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -23,23 +22,24 @@ export default function Login() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-      setErrorMsg('Vui lòng nhập Email và Mật khẩu');
+    if (pin.length < 6) {
+      setErrorMsg('Vui lòng nhập đủ mã PIN 6 số');
       return;
     }
     
     setLoading(true);
     setErrorMsg('');
     
+    // Sử dụng email cố định nội bộ, map với mật khẩu là mã PIN
     const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+      email: 'admin@hostify.local',
+      password: pin, // Mật khẩu người dùng tạo trên Supabase chỉ gồm 6 số
     });
     
     setLoading(false);
     
     if (error) {
-      setErrorMsg(error.message.includes('Invalid login credentials') ? 'Tài khoản hoặc mật khẩu không chính xác' : error.message);
+      setErrorMsg('Mã PIN không chính xác!');
     } else {
       navigate('/');
     }
@@ -55,18 +55,26 @@ export default function Login() {
       px: 2
     }}>
       <Card sx={{ 
-        maxWidth: 400, 
+        maxWidth: 360, 
         width: '100%', 
-        p: { xs: 3, md: 4 },
-        borderRadius: 3,
-        boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+        p: { xs: 4, md: 5 },
+        borderRadius: 4,
+        boxShadow: '0 12px 40px rgba(0,0,0,0.12)'
       }}>
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
-          <Typography variant="h4" sx={{ fontWeight: 900, color: theme.palette.primary.main, mb: 1 }}>
-            HOSTIFY
+        <Box sx={{ textAlign: 'center', mb: 5 }}>
+          <Box sx={{ 
+            width: 64, height: 64, bgcolor: `${theme.palette.primary.main}14`, 
+            color: theme.palette.primary.main, borderRadius: '50%', 
+            display: 'flex', alignItems: 'center', justifyContent: 'center', 
+            mx: 'auto', mb: 2 
+          }}>
+            <LockIcon fontSize="large" />
+          </Box>
+          <Typography variant="h5" sx={{ fontWeight: 900, color: theme.palette.text.primary, mb: 1 }}>
+            Mở khóa Hostify
           </Typography>
           <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
-            Phần mềm Quản lý Dãy Trọ
+            Nhập mã PIN của bạn để tiếp tục
           </Typography>
         </Box>
 
@@ -79,34 +87,37 @@ export default function Login() {
 
           <TextField
             fullWidth
-            label="Email/Tài khoản"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            sx={{ mb: 2.5 }}
-            required
-            autoCapitalize="none"
-            autoCorrect="off"
-          />
-
-          <TextField
-            fullWidth
-            label="Mật khẩu"
+            placeholder="••••••"
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            sx={{ mb: 4 }}
+            inputMode="numeric"
+            value={pin}
+            onChange={(e) => {
+              const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+              setPin(val);
+              setErrorMsg('');
+            }}
+            sx={{ 
+              mb: 4, 
+              '& input': { 
+                textAlign: 'center', 
+                fontSize: '2rem', 
+                letterSpacing: pin.length > 0 ? '0.5em' : 'normal', 
+                fontWeight: 900,
+                py: 2
+              }
+            }}
             required
+            autoFocus
           />
 
           <Button
             type="submit"
             fullWidth
             variant="contained"
-            disabled={loading}
-            sx={{ py: 1.5, fontSize: '1rem', fontWeight: 700, borderRadius: 2 }}
+            disabled={loading || pin.length < 6}
+            sx={{ py: 1.8, fontSize: '1rem', fontWeight: 800, borderRadius: 2 }}
           >
-            {loading ? <CircularProgress size={24} color="inherit" /> : 'ĐĂNG NHẬP'}
+            {loading ? <CircularProgress size={24} color="inherit" /> : 'VÀO TRANG QUẢN TRỊ'}
           </Button>
         </form>
       </Card>

@@ -18,6 +18,8 @@ export default function Dashboard() {
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [totalBilled, setTotalBilled] = useState(0);
   const [totalPaid, setTotalPaid] = useState(0);
+  const [totalBillsCount, setTotalBillsCount] = useState(0);
+  const [paidBillsCount, setPaidBillsCount] = useState(0);
   const [showBackupReminder, setShowBackupReminder] = useState(false);
 
   useEffect(() => {
@@ -27,8 +29,6 @@ export default function Dashboard() {
 
   const totalRooms = rooms.length;
   const vacantRooms = rooms.filter((r) => r.status === 'vacant').length;
-  const occupiedRooms = rooms.filter((r) => r.status === 'occupied').length;
-  const occupancyRate = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0;
 
   // Supabase Finance Logic
   useEffect(() => {
@@ -42,12 +42,16 @@ export default function Dashboard() {
       if (!bills || bills.length === 0) {
         setTotalBilled(0);
         setTotalPaid(0);
+        setTotalBillsCount(0);
+        setPaidBillsCount(0);
         return;
       }
 
       let billed = 0;
+      let _paidBillsCount = 0;
       for (const b of bills) {
         billed += b.totalAmount;
+        if (b.status === 'paid') _paidBillsCount++;
       }
       
       const billIds = bills.map(b => b.id);
@@ -63,6 +67,8 @@ export default function Dashboard() {
 
       setTotalBilled(billed);
       setTotalPaid(paid);
+      setTotalBillsCount(bills.length);
+      setPaidBillsCount(_paidBillsCount);
     }
     loadFinance();
   }, [selectedMonth, selectedYear]);
@@ -134,7 +140,13 @@ export default function Dashboard() {
           <SummaryCard title="Phòng trống" value={vacantRooms} icon="🔑" color="#10B981" />
         </Grid>
         <Grid size={{ xs: 6, sm: 6, md: 3 }}>
-          <SummaryCard title="Tỷ lệ lấp đầy" value={`${occupancyRate}%`} icon="📊" color="#6366F1" />
+          <SummaryCard 
+            title={`Hóa đơn (T${selectedMonth})`} 
+            value={`${paidBillsCount} / ${totalBillsCount} Đã TT`} 
+            icon="🧾" 
+            color="#6366F1" 
+            onClick={() => navigate('/bills')} 
+          />
         </Grid>
         <Grid size={{ xs: 6, sm: 6, md: 3 }}>
           <SummaryCard title="Tòa nhà" value={buildings.length} icon="🏢" color="#F59E0B" />

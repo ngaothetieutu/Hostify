@@ -18,6 +18,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DescriptionIcon from '@mui/icons-material/Description';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import CancelIcon from '@mui/icons-material/Cancel';
+import { supabase } from '../db/supabaseClient';
 import { StatusBadge, ConfirmDialog, EmptyState } from '../components/common';
 import { useRoomStore } from '../stores/roomStore';
 import { useBuildingStore } from '../stores/buildingStore';
@@ -42,6 +43,7 @@ export default function RoomDetail() {
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [terminateDialogOpen, setTerminateDialogOpen] = useState<number | null>(null);
+  const [roomDebt, setRoomDebt] = useState<number>(0);
 
   const loadData = async () => {
     if (!id) return;
@@ -66,6 +68,19 @@ export default function RoomDetail() {
       }
     }
     setTenantMap(map);
+
+    // Calculate room debt
+    const { data: unpaidBills } = await supabase.from('bills').select('id, totalAmount').eq('roomId', parseInt(id)).in('status', ['unpaid', 'overdue']);
+    let currentDebt = 0;
+    if (unpaidBills && unpaidBills.length > 0) {
+      for (const b of unpaidBills) {
+        const { data: allocs } = await supabase.from('receiptAllocations').select('amount').eq('billId', b.id);
+        const paid = allocs?.reduce((s, a) => s + a.amount, 0) || 0;
+        currentDebt += (b.totalAmount - paid);
+      }
+    }
+    setRoomDebt(currentDebt);
+
     setLoading(false);
   };
 
@@ -138,11 +153,30 @@ export default function RoomDetail() {
               <Divider />
               {infoRow('Số phòng', room.roomNumber)}
               <Divider />
-              {infoRow('Tầng', room.floorNumber)}
-              <Divider />
               {infoRow('Diện tích', `${room.areaM2} m²`)}
               <Divider />
-              {infoRow('Giá thuê', formatCurrency(room.baseRent))}
+              {infoRow('Giá thuê cơ bản', formatCurrency(room.baseRent))}
+              <Divider />
+              {infoRow('Tầng', room.floorNumber)}
+              
+              {roomDebt > 0 && (
+                <>
+                  <Divider />
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1.5, mt: 1, bgcolor: `${theme.palette.error.main}14`, px: 2, borderRadius: 2 }}>
+                    <Typography variant="body2" sx={{ color: theme.palette.error.main, fontWeight: 700 }}>
+                      Đang nợ cước
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="subtitle1" sx={{ color: theme.palette.error.main, fontWeight: 800 }}>
+                        {formatCurrency(roomDebt)}
+                      </Typography>
+                      <Button size="small" variant="contained" color="error" sx={{ minWidth: 0, px: 2 }} onClick={() => navigate('/debts')}>
+                        THU NGAY
+                      </Button>
+                    </Box>
+                  </Box>
+                </>
+              )}
             </CardContent>
           </Card>
         </Grid>

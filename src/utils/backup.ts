@@ -24,9 +24,9 @@ export async function exportAllData(): Promise<BackupData> {
     supabase.from('tenants').select('*'),
     supabase.from('contracts').select('*'),
     supabase.from('meterReadings').select('*'),
-    supabase.from('bills').select('*'),
     supabase.from('billItems').select('*'),
-    supabase.from('payments').select('*'),
+    supabase.from('receipts').select('*'),
+    supabase.from('receiptAllocations').select('*')
   ]);
 
   return {

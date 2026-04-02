@@ -30,11 +30,14 @@ import InstallPrompt from '../pwa/InstallPrompt';
 import { DRAWER_WIDTH } from '../../utils/constants';
 import { useAuthStore } from '../../stores/authStore';
 
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+
 const navItems = [
   { path: '/', label: 'Tổng quan', icon: <DashboardIcon /> },
   { path: '/rooms', label: 'Phòng', icon: <MeetingRoomIcon /> },
   { path: '/tenants', label: 'Khách thuê', icon: <PeopleIcon /> },
   { path: '/bills', label: 'Hóa đơn', icon: <ReceiptLongIcon /> },
+  { path: '/receipts', label: 'Phiếu thu', icon: <AccountBalanceWalletIcon /> },
   { path: '/meters', label: 'Điện nước', icon: <SpeedIcon /> },
   { path: '/settings', label: 'Cài đặt', icon: <SettingsIcon /> },
 ];

@@ -55,14 +55,14 @@ export default function Dashboard() {
       }
       
       const billIds = bills.map(b => b.id);
-      const { data: payments } = await supabase
-        .from('payments')
+      const { data: allocations } = await supabase
+        .from('receiptAllocations')
         .select('amount')
         .in('billId', billIds);
 
       let paid = 0;
-      if (payments) {
-        paid = payments.reduce((sum, p) => sum + p.amount, 0);
+      if (allocations) {
+        paid = allocations.reduce((sum, p) => sum + p.amount, 0);
       }
 
       setTotalBilled(billed);

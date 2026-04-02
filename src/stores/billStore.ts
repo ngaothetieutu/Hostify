@@ -6,10 +6,10 @@ import dayjs from 'dayjs';
 interface BillState {
   bills: Bill[];
   billItems: BillItem[];
-  payments: Payment[];
+  allocations: any[]; // To track allocations if needed
   loading: boolean;
   fetchBills: (filter?: { roomId?: number; year?: number; month?: number; status?: string }) => Promise<void>;
-  getBillById: (id: number) => Promise<{ bill: Bill; items: BillItem[]; payments: Payment[] } | undefined>;
+  getBillById: (id: number) => Promise<{ bill: Bill; items: BillItem[]; allocations: any[] } | undefined>;
   createBill: (data: {
     roomId: number; contractId?: number; year: number; month: number;
     items: Omit<BillItem, 'id' | 'billId'>[]; dueDate?: string;
@@ -25,7 +25,7 @@ interface BillState {
 export const useBillStore = create<BillState>((set, get) => ({
   bills: [],
   billItems: [],
-  payments: [],
+  allocations: [],
   loading: false,
 
   fetchBills: async (filter) => {
@@ -56,8 +56,8 @@ export const useBillStore = create<BillState>((set, get) => ({
     const { data: bill } = await supabase.from('bills').select('*').eq('id', id).single();
     if (!bill) return undefined;
     const { data: items } = await supabase.from('billItems').select('*').eq('billId', id);
-    const { data: payments } = await supabase.from('payments').select('*').eq('billId', id).order('id', { ascending: false });
-    return { bill, items: items || [], payments: payments || [] };
+    const { data: allocations } = await supabase.from('receiptAllocations').select('*, receipt:receipts(*)').eq('billId', id).order('id', { ascending: false });
+    return { bill, items: items || [], allocations: allocations || [] };
   },
 
   createBill: async (data) => {
@@ -102,7 +102,7 @@ export const useBillStore = create<BillState>((set, get) => ({
 
     const result = await get().getBillById(id);
     if (result) {
-      const totalPaid = result.payments.reduce((sum, p) => sum + p.amount, 0);
+      const totalPaid = result.allocations.reduce((sum, p) => sum + p.amount, 0);
       const isOverdue = result.bill.dueDate && dayjs().isAfter(dayjs(result.bill.dueDate));
       const status = totalPaid >= totalAmount ? 'paid' : isOverdue ? 'overdue' : 'unpaid';
       await supabase.from('bills').update({ status }).eq('id', id);
@@ -113,40 +113,21 @@ export const useBillStore = create<BillState>((set, get) => ({
   },
 
   deleteBill: async (id) => {
-    const { count } = await supabase.from('payments').select('*', { count: 'exact', head: true }).eq('billId', id);
-    if ((count || 0) > 0) throw new Error('Hóa đơn đã có dữ liệu thanh toán, vui lòng xóa thanh toán trước.');
+    const { count } = await supabase.from('receiptAllocations').select('*', { count: 'exact', head: true }).eq('billId', id);
+    if ((count || 0) > 0) throw new Error('Hóa đơn đã có dữ liệu phân bổ từ phiếu thu, vui lòng xóa phân bổ/phiếu thu trước.');
     await supabase.from('billItems').delete().eq('billId', id);
     const { error } = await supabase.from('bills').delete().eq('id', id);
     if (error) throw error;
     await get().fetchBills();
   },
 
-  addPayment: async (data) => {
-    const { data: newPayment, error } = await supabase.from('payments')
-      .insert([{ ...data }]).select().single();
-    if (error) throw error;
-
-    const result = await get().getBillById(data.billId);
-    if (result) {
-      const totalPaid = result.payments.reduce((sum, p) => sum + p.amount, 0) + data.amount;
-      const isOverdue = result.bill.dueDate && dayjs().isAfter(dayjs(result.bill.dueDate));
-      const status = totalPaid >= result.bill.totalAmount ? 'paid' : isOverdue ? 'overdue' : 'unpaid';
-      await supabase.from('bills').update({ status }).eq('id', data.billId);
-    }
-
-    await get().fetchBills();
-    return newPayment;
+  // Backward compatibility wrapper (will be deprecated, rely on receiptStore instead)
+  addPayment: async () => {
+    // Legacy support: We use useReceiptStore instead in the components, but we throw error here to force update
+    throw new Error('Please use receiptStore.createReceiptAndAllocate instead');
   },
 
-  deletePayment: async (paymentId, billId) => {
-    await supabase.from('payments').delete().eq('id', paymentId);
-    const result = await get().getBillById(billId);
-    if (result) {
-      const totalPaid = result.payments.reduce((sum, p) => sum + p.amount, 0);
-      const isOverdue = result.bill.dueDate && dayjs().isAfter(dayjs(result.bill.dueDate));
-      const status = totalPaid >= result.bill.totalAmount ? 'paid' : isOverdue ? 'overdue' : 'unpaid';
-      await supabase.from('bills').update({ status }).eq('id', billId);
-    }
-    await get().fetchBills();
+  deletePayment: async () => {
+    throw new Error('Please use receiptStore.deleteReceipt instead');
   },
 }));

@@ -47,6 +47,8 @@ const TABLE_LABELS: Record<string, string> = {
   bills: '💰 Hóa đơn',
   billItems: '📋 Chi tiết hóa đơn',
   payments: '💳 Thanh toán',
+  receipts: '🧾 Phiếu thu',
+  receiptAllocations: '🔗 Phân bổ phiếu thu',
 };
 
 export default function Backup() {

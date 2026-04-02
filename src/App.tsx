@@ -9,6 +9,9 @@ import ContractForm from './pages/ContractForm';
 import Bills from './pages/Bills';
 import BillCreate from './pages/BillCreate';
 import BillDetail from './pages/BillDetail';
+import Debts from './pages/Debts';
+import Receipts from './pages/Receipts';
+import ReceiptDetail from './pages/ReceiptDetail';
 import Meters from './pages/Meters';
 import Settings from './pages/Settings';
 import Backup from './pages/Backup';
@@ -43,6 +46,11 @@ export default function App() {
             <Route path="/bills" element={<Bills />} />
             <Route path="/bills/create" element={<BillCreate />} />
             <Route path="/bills/:id" element={<BillDetail />} />
+            
+            <Route path="/debts" element={<Debts />} />
+            <Route path="/receipts" element={<Receipts />} />
+            <Route path="/receipts/:id" element={<ReceiptDetail />} />
+
             <Route path="/meters" element={<Meters />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/backup" element={<Backup />} />

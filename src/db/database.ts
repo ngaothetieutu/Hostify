@@ -97,13 +97,31 @@ export interface BillItem {
   amount: number;
 }
 
+export interface Receipt {
+  id?: number;
+  roomId: number;
+  tenantId?: number | null;
+  amount: number;
+  method: 'cash' | 'transfer';
+  note?: string;
+  recordedAt?: string;
+}
+
+export interface ReceiptAllocation {
+  id?: number;
+  receiptId: number;
+  billId: number;
+  amount: number;
+}
+
+// Payment interface kept for backward compatibility during migration
 export interface Payment {
   id?: number;
   billId: number;
   amount: number;
   method: 'cash' | 'transfer';
-  note: string;
-  paidAt: Date;
+  note?: string;
+  paidAt?: string;
 }
 
 // ─── Database Class ───

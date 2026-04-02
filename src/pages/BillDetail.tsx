@@ -28,6 +28,7 @@ import html2canvas from 'html2canvas';
 import { StatusBadge, ConfirmDialog, EmptyState, NumericFormatCustom } from '../components/common';
 import { useBillStore } from '../stores/billStore';
 import { useRoomStore } from '../stores/roomStore';
+import { useReceiptStore } from '../stores/receiptStore';
 import { formatCurrency, formatDate, formatMonthYear } from '../utils/formatters';
 import type { Bill, BillItem, Payment } from '../db/database';
 
@@ -46,7 +47,7 @@ export default function BillDetail({ idProp, onClose, isModal }: BillDetailProps
   const { getBillById, addPayment, deletePayment, deleteBill } = useBillStore();
   const { getRoomById } = useRoomStore();
 
-  const [billData, setBillData] = useState<{ bill: Bill; items: BillItem[]; payments: Payment[] } | null>(null);
+  const [billData, setBillData] = useState<{ bill: Bill; items: BillItem[]; allocations: any[] } | null>(null);
   const [roomNumber, setRoomNumber] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -78,22 +79,27 @@ export default function BillDetail({ idProp, onClose, isModal }: BillDetailProps
     return <EmptyState icon="🔍" title="Không tìm thấy" subtitle="Hóa đơn không tồn tại hoặc đã bị xóa" />;
   }
 
-  const { bill, items, payments } = billData;
-  const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+  const { bill, items, allocations } = billData;
+  const totalPaid = allocations.reduce((sum: number, p: any) => sum + p.amount, 0);
   const remaining = Math.max(0, bill.totalAmount - totalPaid);
 
   const handleAddPayment = async () => {
     if (!paymentAmount) return;
-    await addPayment({
-      billId: bill.id!,
-      amount: Number(paymentAmount),
-      method: paymentMethod,
-      note: paymentNote,
-    });
-    setPaymentDialogOpen(false);
-    setPaymentAmount('');
-    setPaymentNote('');
-    loadData();
+    try {
+      await useReceiptStore.getState().createReceiptAndAllocate(
+        bill.roomId,
+        Number(paymentAmount),
+        paymentMethod,
+        paymentNote,
+        [{ billId: bill.id!, allocatedAmount: Number(paymentAmount) }]
+      );
+      setPaymentDialogOpen(false);
+      setPaymentAmount('');
+      setPaymentNote('');
+      loadData();
+    } catch (err: any) {
+      alert("Lỗi: " + err.message);
+    }
   };
 
   const handleDeleteBill = async () => {
@@ -304,25 +310,26 @@ export default function BillDetail({ idProp, onClose, isModal }: BillDetailProps
           <Card>
             <CardContent>
               <Typography variant="subtitle2" sx={{ mb: 2 }}>Lịch sử thanh toán</Typography>
-              {payments.length === 0 ? (
-                <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>Chưa có thanh toán nào.</Typography>
+              {allocations.length === 0 ? (
+                <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>Chưa có thanh toán nào</Typography>
               ) : (
-                payments.map((p) => (
+                allocations.map((p: any) => (
                   <Box key={p.id} sx={{ mb: 2, p: 1.5, bgcolor: theme.palette.background.default, borderRadius: 2 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                       <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatCurrency(p.amount)}</Typography>
-                      <Chip label={p.method === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'} size="small" variant="outlined" />
+                      <Chip label={p.receipt?.method === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'} size="small" variant="outlined" />
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
-                        {formatDate(p.paidAt)} {p.note && `• ${p.note}`}
+                        {p.receipt?.recordedAt ? formatDate(p.receipt.recordedAt) : ''} {p.receipt?.note && `• ${p.receipt.note}`}
                       </Typography>
                       <IconButton
                         size="small"
                         color="error"
                         onClick={async () => {
-                          if (confirm('Xóa giao dịch này?')) {
-                            await deletePayment(p.id!, bill.id!);
+                          if (confirm('Xóa giao dịch này và hủy phân bổ?')) {
+                            // Note: this deletes the entire receipt!
+                            await useReceiptStore.getState().deleteReceipt(p.receiptId);
                             loadData();
                           }
                         }}

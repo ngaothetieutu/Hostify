@@ -3,7 +3,6 @@ import { Box, Typography, Card, CardContent, Chip, TextField, MenuItem, Button, 
 import { useNavigate } from 'react-router-dom';
 import { useReceiptStore } from '../stores/receiptStore';
 import { formatCurrency, formatDate } from '../utils/formatters';
-import type { Receipt } from '../db/database';
 
 export default function Receipts() {
   const theme = useTheme();

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '../db/supabaseClient';
-import type { Receipt, ReceiptAllocation } from '../db/database';
+import type { Receipt } from '../db/database';
 import { useBillStore } from './billStore';
 
 interface ReceiptState {

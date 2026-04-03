@@ -30,7 +30,7 @@ import { useBillStore } from '../stores/billStore';
 import { useRoomStore } from '../stores/roomStore';
 import { useReceiptStore } from '../stores/receiptStore';
 import { formatCurrency, formatDate, formatMonthYear } from '../utils/formatters';
-import type { Bill, BillItem, Payment } from '../db/database';
+import type { Bill, BillItem } from '../db/database';
 
 export interface BillDetailProps {
   idProp?: string;
@@ -44,7 +44,7 @@ export default function BillDetail({ idProp, onClose, isModal }: BillDetailProps
   const navigate = useNavigate();
   const theme = useTheme();
 
-  const { getBillById, addPayment, deletePayment, deleteBill } = useBillStore();
+  const { getBillById, deleteBill } = useBillStore();
   const { getRoomById } = useRoomStore();
 
   const [billData, setBillData] = useState<{ bill: Bill; items: BillItem[]; allocations: any[] } | null>(null);

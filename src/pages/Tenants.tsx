@@ -28,15 +28,23 @@ import CloseIcon from '@mui/icons-material/Close';
 import HomeIcon from '@mui/icons-material/Home';
 import { PageHeader, EmptyState } from '../components/common';
 import { useTenantStore } from '../stores/tenantStore';
+import { useRoomStore } from '../stores/roomStore';
 
 export default function Tenants() {
   const theme = useTheme();
-  const { tenants, fetchTenants, addTenant, updateTenant } = useTenantStore();
+  const { tenants, fetchTenants, addTenant, updateTenant, contracts, fetchContracts } = useTenantStore();
+  const { rooms, fetchRooms } = useRoomStore();
   const [search, setSearch] = useState('');
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetchTenants();
+    fetchContracts();
+    fetchRooms();
+  }, []);
   
   // Form fields
   const [fullName, setFullName] = useState('');
@@ -146,7 +154,10 @@ export default function Tenants() {
       {/* Tenant List */}
       {filtered.length > 0 ? (
         <Grid container spacing={2}>
-          {filtered.map((tenant) => (
+          {filtered.map((tenant) => {
+            const activeContract = contracts.find(c => c.tenantId === tenant.id && c.status === 'active');
+            const currentRoom = activeContract ? rooms.find(r => r.id === activeContract.roomId) : null;
+            return (
             <Grid size={{ xs: 12, sm: 6, md: 4 }} key={tenant.id}>
               <Card sx={{ '&:hover': { transform: 'translateY(-2px)' }, transition: 'transform 0.2s', opacity: tenant.status === 'inactive' ? 0.7 : 1 }}>
                 <CardActionArea onClick={() => openEditDialog(tenant)}>
@@ -162,7 +173,15 @@ export default function Tenants() {
                         variant="outlined" 
                       />
                     </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mb: 0.5 }}>
+                      {currentRoom && (
+                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                           <Typography variant="body2" color="primary.main" fontWeight="bold">
+                             🏠 Đang ở: Phòng {currentRoom.roomNumber}
+                           </Typography>
+                         </Box>
+                      )}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <PhoneIcon sx={{ fontSize: 16, color: theme.palette.text.secondary }} />
                       <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
                         {tenant.phone || '—'}
@@ -182,11 +201,13 @@ export default function Tenants() {
                         </Typography>
                       </Box>
                     )}
+                    </Box>
                   </CardContent>
                 </CardActionArea>
               </Card>
             </Grid>
-          ))}
+            );
+          })}
         </Grid>
       ) : (
         <EmptyState icon="👤" title="Chưa có khách thuê" subtitle="Thêm khách thuê để tạo hợp đồng" />

@@ -42,6 +42,7 @@ import { useBuildingStore } from '../stores/buildingStore';
 import { useRoomStore } from '../stores/roomStore';
 import { useTenantStore } from '../stores/tenantStore';
 import { formatCurrency } from '../utils/formatters';
+import { supabase } from '../db/supabaseClient';
 
 
 export default function Rooms() {
@@ -64,12 +65,30 @@ export default function Rooms() {
   const [buildingAddress, setBuildingAddress] = useState('');
   const [buildingFloors, setBuildingFloors] = useState('1');
   const [savingBuilding, setSavingBuilding] = useState(false);
+  const [roomDebts, setRoomDebts] = useState<Record<number, number>>({});
 
   useEffect(() => {
     fetchBuildings();
     fetchRooms();
     fetchTenants();
     fetchContracts();
+
+    const loadDebts = async () => {
+      const { data: bills } = await supabase.from('bills').select('id, roomId, totalAmount').in('status', ['unpaid', 'overdue']);
+      if (bills && bills.length > 0) {
+        const debts: Record<number, number> = {};
+        for (const b of bills) {
+          const { data: allocs } = await supabase.from('receiptAllocations').select('amount').eq('billId', b.id);
+          const paid = allocs?.reduce((s, a) => s + a.amount, 0) || 0;
+          const remaining = b.totalAmount - paid;
+          if (remaining > 0) {
+            debts[b.roomId] = (debts[b.roomId] || 0) + remaining;
+          }
+        }
+        setRoomDebts(debts);
+      }
+    };
+    loadDebts();
   }, [fetchBuildings, fetchRooms, fetchTenants, fetchContracts]);
 
   // Filter rooms
@@ -304,9 +323,16 @@ export default function Rooms() {
                         <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
                           {room.areaM2}m²
                         </Typography>
-                        <Typography variant="subtitle2" sx={{ color: theme.palette.primary.main, fontWeight: 700 }}>
-                          {formatCurrency(room.baseRent)}/th
-                        </Typography>
+                        <Box sx={{ textAlign: 'right' }}>
+                          <Typography variant="subtitle2" sx={{ color: theme.palette.primary.main, fontWeight: 700 }}>
+                            {formatCurrency(room.baseRent)}/th
+                          </Typography>
+                          {roomDebts[room.id!] > 0 && (
+                            <Typography variant="caption" sx={{ color: theme.palette.error.main, fontWeight: 'bold' }}>
+                              Nợ: {formatCurrency(roomDebts[room.id!])}
+                            </Typography>
+                          )}
+                        </Box>
                       </Box>
 
                       {/* Tenant Info */}
@@ -391,11 +417,18 @@ export default function Rooms() {
                         )}
                       </Box>
                       
-                      <Box sx={{ width: { xs: '100%', md: '20%' }, display: 'flex', justifyContent: { xs: 'space-between', md: 'center' }, alignItems: 'center' }}>
+                      <Box sx={{ width: { xs: '100%', md: '20%' }, display: 'flex', justifyContent: { xs: 'space-between', md: 'center' }, alignItems: 'center', flexWrap: 'wrap' }}>
                         <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mr: 1 }}>{room.areaM2}m²</Typography>
-                        <Typography variant="subtitle2" sx={{ color: theme.palette.primary.main, fontWeight: 700 }}>
-                          {formatCurrency(room.baseRent)}/th
-                        </Typography>
+                        <Box sx={{ textAlign: 'right' }}>
+                          <Typography variant="subtitle2" sx={{ color: theme.palette.primary.main, fontWeight: 700 }}>
+                            {formatCurrency(room.baseRent)}/th
+                          </Typography>
+                          {roomDebts[room.id!] > 0 && (
+                            <Typography variant="caption" sx={{ color: theme.palette.error.main, fontWeight: 'bold' }}>
+                              Nợ: {formatCurrency(roomDebts[room.id!])}
+                            </Typography>
+                          )}
+                        </Box>
                       </Box>
                       
                       <Box sx={{ width: { xs: '100%', md: '15%' }, display: { xs: 'none', md: 'flex' }, justifyContent: 'flex-end' }}>

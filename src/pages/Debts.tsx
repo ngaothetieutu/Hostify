@@ -3,6 +3,7 @@ import { Box, Typography, Card, CardContent, Divider, Button, TextField, MenuIte
 import { supabase } from '../db/supabaseClient';
 import { useReceiptStore } from '../stores/receiptStore';
 import { formatCurrency } from '../utils/formatters';
+import { NumericFormatCustom } from '../components/common';
 
 interface DebtRow {
   roomId: number;
@@ -151,9 +152,12 @@ export default function Debts() {
               <TextField
                 fullWidth
                 label="Số tiền thực thu"
-                type="number"
+                name="amount"
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(e.target.value)}
+                InputProps={{
+                  inputComponent: NumericFormatCustom as any,
+                }}
                 sx={{ mb: 2 }}
               />
 

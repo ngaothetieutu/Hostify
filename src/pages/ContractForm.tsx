@@ -44,6 +44,7 @@ export default function ContractForm() {
   const [coTenantIds, setCoTenantIds] = useState<number[]>([]);
   const [startDate, setStartDate] = useState(dayjs().format('YYYY-MM-DD'));
   const [endDate, setEndDate] = useState(dayjs().add(12, 'month').format('YYYY-MM-DD'));
+  const [monthlyRentInput, setMonthlyRentInput] = useState('');
   const [deposit, setDeposit] = useState('');
   const [numberOfTenants, setNumberOfTenants] = useState('1');
   
@@ -72,17 +73,32 @@ export default function ContractForm() {
           setCoTenantIds(contract.coTenantIds || []);
           setStartDate(contract.startDate);
           setEndDate(contract.endDate || '');
+          setMonthlyRentInput(contract.monthlyRent.toString());
           setDeposit(contract.deposit.toString());
           setNumberOfTenants(contract.numberOfTenants.toString());
-          setServices(JSON.parse(contract.servicesJson));
+          
+          const parsedServices = JSON.parse(contract.servicesJson || "[]") as ContractService[];
+          const defaultServices = getDefaultContractServices(useSettingsStore.getState().serviceTypes);
+          const mergedServices = defaultServices.map(ds => {
+            const existing = parsedServices.find((p: ContractService) => p.serviceId === ds.serviceId);
+            return existing ? existing : ds;
+          });
+          
+          setServices(mergedServices);
         }
       });
     }
   }, [editContractId, getContractById]);
 
-  // Auto-fill rent from selected room
+  // Auto-fill monthlyRent from selected room when room changes (only for new contract)
   const selectedRoom = rooms.find((r) => r.id === parseInt(roomId));
-  const monthlyRent = selectedRoom?.baseRent ?? 0;
+  useEffect(() => {
+    if (!editContractId && selectedRoom) {
+      setMonthlyRentInput(selectedRoom.baseRent.toString());
+    }
+  }, [selectedRoom?.id, editContractId]);
+
+  const monthlyRent = parseFloat(monthlyRentInput) || 0;
 
   // Available room options
   const roomOptions = rooms.filter((r) => r.status === 'vacant' || r.id === parseInt(roomId));
@@ -99,7 +115,7 @@ export default function ContractForm() {
       c.coTenantIds.forEach((id) => occupiedTenantIds.add(id));
     }
   });
-  const availableTenants = tenants.filter((t) => !occupiedTenantIds.has(t.id!));
+  const availableTenants = tenants.filter((t) => !occupiedTenantIds.has(t.id!) && t.status !== 'inactive');
 
   // Toggle service
   const toggleService = (serviceId: string) => {
@@ -130,7 +146,7 @@ export default function ContractForm() {
         coTenantIds,
         startDate,
         endDate: endDate || undefined,
-        monthlyRent,
+        monthlyRent: parseFloat(monthlyRentInput) || 0,
         deposit: parseFloat(deposit.toString()) || 0,
         numberOfTenants: parseInt(numberOfTenants) || 1,
         services,
@@ -235,6 +251,22 @@ export default function ContractForm() {
                 </Grid>
               </Grid>
 
+              {/* Monthly Rent — editable, stored in contract */}
+              <TextField
+                label="💰 Giá thuê/tháng (VNĐ) *"
+                name="monthlyRent"
+                value={monthlyRentInput}
+                onChange={(e) => setMonthlyRentInput(e.target.value)}
+                InputProps={{ inputComponent: NumericFormatCustom as any }}
+                fullWidth
+                sx={{ mb: 2.5 }}
+                helperText={
+                  selectedRoom
+                    ? `Giá gốc phòng ${selectedRoom.roomNumber}: ${formatCurrency(selectedRoom.baseRent)}/tháng`
+                    : 'Giá này được lưu vào hợp đồng và dùng khi lập hóa đơn'
+                }
+              />
+
               <Grid container spacing={2} sx={{ mb: 2.5 }}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
@@ -278,22 +310,6 @@ export default function ContractForm() {
                     />
                   </Grid>
                 </Grid>
-              )}
-
-              {selectedRoom && (
-                <Box sx={{
-                  p: 2,
-                  borderRadius: 2,
-                  bgcolor: `${theme.palette.primary.main}08`,
-                  border: `1px solid ${theme.palette.primary.main}22`,
-                }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                    💰 Giá thuê: {formatCurrency(monthlyRent)}/tháng
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
-                    Tự động lấy từ giá phòng {selectedRoom.roomNumber}
-                  </Typography>
-                </Box>
               )}
             </CardContent>
           </Card>

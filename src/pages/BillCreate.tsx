@@ -9,7 +9,6 @@ import {
   MenuItem,
   Grid,
   Button,
-  Divider,
   Alert,
   IconButton,
   useTheme,
@@ -405,89 +404,99 @@ export default function BillCreate({ roomIdProp, onClose, isModal }: BillCreateP
                 </Typography>
               ) : (
                 <Box>
+                  {/* Column headers */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, pb: 1, mb: 0.5, borderBottom: `1px solid ${theme.palette.divider}` }}>
+                    <Typography variant="caption" sx={{ flex: 1, color: theme.palette.text.secondary, fontWeight: 600 }}>Nội dung</Typography>
+                    <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontWeight: 600, minWidth: 130, textAlign: 'right' }}>Đơn giá × SL</Typography>
+                    <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontWeight: 600, minWidth: 90, textAlign: 'right' }}>Thành tiền</Typography>
+                    <Box sx={{ width: 28 }} />
+                  </Box>
+
                   {allItems.map((item, index) => {
-                    const isSystem = item.itemType !== 'other'; // Prevent editing standard items
+                    const isSystem = item.itemType !== 'other';
                     const customIndex = index - systemItems.length;
                     return (
-                      <Box key={index} sx={{ mb: 3 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-                          {isSystem ? (
-                            <Typography variant="body1" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
-                              {item.description}
-                            </Typography>
-                          ) : (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
-                              <TextField
-                                label="Nội dung"
-                                value={item.description}
-                                onChange={(e) => updateCustomItem(customIndex, 'description', e.target.value)}
-                                size="small"
-                                sx={{ flex: 1 }}
-                              />
-                              <IconButton color="error" size="small" onClick={() => removeCustomItem(customIndex)}>
-                                <DeleteIcon />
-                              </IconButton>
-                            </Box>
-                          )}
-                          {isSystem && (
-                             <Typography variant="body1" sx={{ fontWeight: 800, color: theme.palette.primary.main, ml: 2, flexShrink: 0 }}>
-                              {formatCurrency(item.amount)}
-                             </Typography>
-                          )}
-                        </Box>
-                        
-                        <Box sx={{ ml: isSystem ? 2 : 0, display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {!isSystem && (
+                      <Box
+                        key={index}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          py: 0.75,
+                          borderBottom: index < allItems.length - 1 ? `1px solid ${theme.palette.divider}` : 'none',
+                        }}
+                      >
+                        {/* Description */}
+                        {isSystem ? (
+                          <Typography variant="body2" sx={{ flex: 1, fontWeight: 500 }}>{item.description}</Typography>
+                        ) : (
+                          <TextField
+                            placeholder="Nội dung khoản phí"
+                            value={item.description}
+                            onChange={(e) => updateCustomItem(customIndex, 'description', e.target.value)}
+                            size="small"
+                            sx={{ flex: 1 }}
+                          />
+                        )}
+
+                        {/* Price × Qty */}
+                        {isSystem ? (
+                          <Typography variant="caption" sx={{ color: theme.palette.text.secondary, whiteSpace: 'nowrap', minWidth: 130, textAlign: 'right' }}>
+                            {formatCurrency(item.unitPrice)}
+                            {item.quantity !== 1 ? ` × ${item.quantity}${item.itemType === 'electricity' ? ' kWh' : item.itemType === 'water' ? ' m³' : ''}` : ''}
+                          </Typography>
+                        ) : (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 130, justifyContent: 'flex-end' }}>
                             <TextField
-                              label="Số lượng"
                               type="number"
                               value={item.quantity}
                               onChange={(e) => updateCustomItem(customIndex, 'quantity', Number(e.target.value))}
                               size="small"
-                              sx={{ width: 80 }}
+                              sx={{ width: 52 }}
+                              inputProps={{ min: 1, style: { textAlign: 'center', padding: '4px 6px' } }}
                             />
-                          )}
-                          <TextField
-                            label="Đơn giá"
-                            name={`unitPrice-${index}`}
-                            value={item.unitPrice}
-                            onChange={(e) => updateCustomItem(customIndex, 'unitPrice', Number(e.target.value))}
-                            InputProps={{ inputComponent: NumericFormatCustom as any }}
-                            size="small"
-                            disabled={isSystem}
-                            sx={{ width: 140, ...(isSystem && { '& .MuiInputBase-input.Mui-disabled': { WebkitTextFillColor: theme.palette.text.primary, fontWeight: 600 } }) }}
-                          />
-                          
-                          {isSystem && (
-                             <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
-                               × {item.quantity} {item.itemType === 'electricity' ? 'kWh' : item.itemType === 'water' ? 'khối' : ''}
-                             </Typography>
-                          )}
+                            <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>×</Typography>
+                            <TextField
+                              name={`unitPrice-${index}`}
+                              value={item.unitPrice}
+                              onChange={(e) => updateCustomItem(customIndex, 'unitPrice', Number(e.target.value))}
+                              InputProps={{ inputComponent: NumericFormatCustom as any }}
+                              size="small"
+                              sx={{ width: 90 }}
+                              inputProps={{ style: { padding: '4px 6px' } }}
+                            />
+                          </Box>
+                        )}
 
-                          {!isSystem && (
-                             <Typography variant="body2" sx={{ fontWeight: 700, color: theme.palette.primary.main, ml: 'auto' }}>
-                               = {formatCurrency(item.amount)}
-                             </Typography>
-                          )}
-                        </Box>
-                        <Divider sx={{ mt: 3, display: index === allItems.length - 1 ? 'none' : 'block' }} />
+                        {/* Amount */}
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: theme.palette.primary.main, minWidth: 90, textAlign: 'right', flexShrink: 0 }}>
+                          {formatCurrency(item.amount)}
+                        </Typography>
+
+                        {/* Delete / spacer */}
+                        {!isSystem ? (
+                          <IconButton color="error" size="small" onClick={() => removeCustomItem(customIndex)} sx={{ flexShrink: 0, p: 0.5 }}>
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        ) : (
+                          <Box sx={{ width: 28 }} />
+                        )}
                       </Box>
                     );
                   })}
 
-                  <Divider sx={{ my: 3 }} />
-
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant="h6">Tổng cộng:</Typography>
-                    <Typography variant="h5" sx={{ fontWeight: 800, color: theme.palette.primary.main }}>
+                  {/* Total */}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1.5, pt: 1.5, borderTop: `2px solid ${theme.palette.divider}` }}>
+                    <Typography variant="subtitle2">Tổng cộng</Typography>
+                    <Typography variant="h6" sx={{ fontWeight: 800, color: theme.palette.primary.main }}>
                       {formatCurrency(totalAmount)}
                     </Typography>
                   </Box>
-                  
-                  <Box sx={{ display: 'flex', gap: 2, mt: 4, pb: 2 }}>
+
+                  <Box sx={{ display: 'flex', gap: 2, mt: 2, pb: 1 }}>
                     <Button variant="outlined" sx={{ flex: 1, py: 1.5 }} onClick={() => {
-                        if (isModal && onClose) onClose();
-                        else navigate('/bills');
+                      if (isModal && onClose) onClose();
+                      else navigate('/bills');
                     }}>Hủy</Button>
                     <Button
                       variant="contained"

@@ -1,0 +1,5 @@
+# Windsurf Rules for Antigravity Agent
+
+1. **Maintain Context Consistency**: Before working on major refactoring, restructuring, or logic alteration, YOU MUST read `docs/project_overview.md` to grasp the full architectural context and tech stack of QLPhongTro (Vite, React, MUI, Zustand, Supabase).
+2. **Update Context**: Every time a significant configuration, schema modification, or toolchain update occurs, YOU MUST meticulously compact that reality back into `docs/project_overview.md` so future conversations remain accurate. 
+3. **Use Workflows**: Run or refer to the `_agents/workflows/refactor.md` workflow for systematic guidance on code modification.

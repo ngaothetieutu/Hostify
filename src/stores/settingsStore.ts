@@ -13,7 +13,7 @@ export interface AppServiceType {
 export const DEFAULT_SERVICE_TYPES: AppServiceType[] = [
   { id: 'washing',  label: 'Máy giặt',  icon: '🫧', defaultPrice: 100000, unit: 'person', unitLabel: '/người/tháng' },
   { id: 'elevator', label: 'Thang máy', icon: '🛗', defaultPrice: 50000,  unit: 'person', unitLabel: '/người/tháng' },
-  { id: 'cleaning', label: 'Vệ sinh',   icon: '🧹', defaultPrice: 30000,  unit: 'room',   unitLabel: '/phòng/tháng' },
+  { id: 'cleaning', label: 'Vệ sinh',   icon: '🧹', defaultPrice: 30000,  unit: 'person', unitLabel: '/người/tháng' },
   { id: 'wifi',     label: 'Wifi',       icon: '📶', defaultPrice: 100000, unit: 'room',   unitLabel: '/phòng/tháng' },
 ];
 

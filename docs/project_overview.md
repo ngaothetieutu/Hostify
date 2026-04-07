@@ -67,9 +67,11 @@ stateDiagram-v2
 ### 2.2 Quản lý Hợp đồng
 
 - Hợp đồng gắn **1 phòng** + **1 khách thuê**
-- Thông tin: ngày bắt đầu, ngày kết thúc (có thể vô hạn), giá thuê/tháng, tiền cọc
+- Thông tin: ngày bắt đầu, ngày kết thúc (có thể vô hạn), giá thuê/tháng (**bắt buộc nhập riêng, không hard-code từ phòng**), tiền cọc
 - Trạng thái: `active` → `expired` → `terminated`
-- Giá thuê trong hợp đồng có thể khác giá thuê gốc của phòng (override)
+- Giá thuê (`monthlyRent`) **phải được nhập và lưu trong hợp đồng** — không phụ thuộc vào `room.baseRent`
+- `room.baseRent` chỉ dùng làm **gợi ý mặc định** khi tạo hợp đồng mới
+- **Data Integrity**: Khi hợp đồng bị sửa đổi, các hóa đơn cũ đã lập không bị ảnh hưởng (bill items đã snapshot giá tại thời điểm tạo)
 - Khi tạo HĐ: tự động cập nhật `room.status = 'occupied'`
 - Khi chấm dứt HĐ: kiểm tra còn HĐ active khác không → nếu không → `room.status = 'vacant'`
 
@@ -98,7 +100,7 @@ Hóa đơn tháng = Tiền phòng + Tiền điện + Tiền nước + (Phí khá
 
 | Mục (Bill Item) | Công thức |
 |-----------------|-----------|
-| **Tiền phòng** (`rent`) | `contract.monthlyRent ?? room.baseRent` |
+| **Tiền phòng** (`rent`) | `contract.monthlyRent` (**bắt buộc từ HĐ, không dùng room.baseRent**) |
 | **Tiền điện** (`electricity`) | `(electricityNew - electricityOld) × room.electricityRate` |
 | **Tiền nước** (`water`) | `(waterNew - waterOld) × room.waterRate` |
 | **Internet** (`internet`) | Phí cố định (nếu có) |
@@ -130,18 +132,18 @@ Hóa đơn tháng = Tiền phòng + Tiền điện + Tiền nước + (Phí khá
 
 ```mermaid
 graph TB
-    subgraph "Mobile App (React Native + Expo)"
-        UI["UI Layer<br/>React Native Paper"]
-        NAV["Navigation<br/>Expo Router (File-based)"]
-        STATE["State Management<br/>Zustand Stores"]
-        ORM["Data Layer<br/>Drizzle ORM"]
-        DB["Local Database<br/>SQLite (expo-sqlite)"]
+    subgraph "Web App (React + Vite)"
+        UI["UI Layer<br/>React + MUI"]
+        NAV["Navigation<br/>React Router DOM"]
+        STATE["State Management<br/>Zustand & Dexie"]
+        API["Data Layer<br/>Supabase JS Client"]
+        DB["Cloud Database<br/>Supabase PostgreSQL"]
     end
 
     UI --> NAV
     UI --> STATE
-    STATE --> ORM
-    ORM --> DB
+    STATE --> API
+    API --> DB
 ```
 
 ### 3.2 Kiến trúc Chi tiết
@@ -242,6 +244,10 @@ erDiagram
         text id_card_front_path
         text id_card_back_path
         text date_of_birth
+        text permanent_address
+        text emergency_contact_name
+        text emergency_contact_phone
+        text status "active|inactive"
         int created_at
     }
 
@@ -310,30 +316,26 @@ erDiagram
 
 | Layer | Công nghệ | Version | Vai trò |
 |-------|-----------|---------|---------|
-| **Framework** | React Native | 0.83.2 | Cross-platform mobile UI |
-| **Platform** | Expo | ~55.0.4 | Build toolchain, native modules |
-| **Language** | TypeScript | ~5.9.2 | Type safety |
-| **UI** | React | 19.2.0 | UI rendering engine |
+| **Framework** | Vite | ^8.0.0 | Build tool & dev server |
+| **Language** | TypeScript | ~5.9.0 | Type safety |
+| **UI** | React DOM | 19.2.0 | UI rendering engine |
+| **Component Lib** | Material UI (MUI)| ^7.3.0 | Material Design 3 UI library |
 
 ### 4.2 Navigation & UI
 
 | Thư viện | Version | Vai trò |
 |----------|---------|---------|
-| **expo-router** | ^55.0.3 | File-based routing (giống Next.js) |
-| **react-native-paper** | ^5.15.0 | Material Design 3 component library |
-| **react-native-safe-area-context** | ^5.7.0 | Safe area handling |
-| **react-native-screens** | ^4.24.0 | Native screen optimization |
-| **react-native-vector-icons** | ^10.3.0 | Icon library |
-| **expo-status-bar** | ~55.0.4 | Status bar control |
+| **react-router-dom** | ^7.13.0 | Client-side routing |
+| **@emotion/react/styled** | ^11.14.0| CSS-in-JS support |
+| **@mui/icons-material** | ^7.3.0 | Icon library |
 
 ### 4.3 State & Data
 
 | Thư viện | Version | Vai trò |
 |----------|---------|---------|
-| **zustand** | ^5.0.11 | Lightweight state management |
-| **drizzle-orm** | ^0.45.1 | Type-safe ORM cho SQLite |
-| **expo-sqlite** | ^55.0.10 | SQLite native module |
-| **drizzle-kit** | ^0.31.9 | Schema migration CLI (dev) |
+| **zustand** | ^5.0.0 | Lightweight state management |
+| **@supabase/supabase-js**| ^2.101.0| Connect to Supabase Postgres backend |
+| **dexie** | ^4.4.1 | IndexedDB for local caching/PWA |
 
 ### 4.4 Form & Validation
 
@@ -475,5 +477,11 @@ QLPhongTro/
 
 ---
 
-> 📅 **Cập nhật lần cuối:** 28/03/2026  
-> 📱 **Version hiện tại:** 1.0.0 (MVP)
+> 📅 **Cập nhật lần cuối:** 07/04/2026  
+> 📱 **Version hiện tại:** 1.1.0
+
+### Phase 1.1 (07/04/2026) — Thay đổi lớn:
+- **Hợp đồng**: Giá phòng (`monthlyRent`) nay là trường nhập bắt buộc riêng biệt, không hard-code từ room
+- **Hóa đơn**: Giá phòng lấy từ hợp đồng tại thời điểm lập (snapshot), không bị ảnh hưởng khi HĐ thay đổi
+- **Khách thuê**: Trạng thái `inactive` (Đã dọn đi) — không xóa data, không hiển thị trong dropdown HĐ mới
+- **BillDetail UI**: Refactor với collapsible sections (Thông tin chung / Chi tiết tiền / Lịch sử thanh toán)

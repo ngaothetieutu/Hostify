@@ -17,6 +17,7 @@ import {
   TextField,
   MenuItem,
   Chip,
+  Collapse,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -24,6 +25,11 @@ import PrintIcon from '@mui/icons-material/Print';
 import PaymentIcon from '@mui/icons-material/Payment';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import EditIcon from '@mui/icons-material/Edit';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
 import html2canvas from 'html2canvas';
 import { StatusBadge, ConfirmDialog, EmptyState, NumericFormatCustom } from '../components/common';
 import { useBillStore } from '../stores/billStore';
@@ -36,6 +42,50 @@ export interface BillDetailProps {
   idProp?: string;
   onClose?: () => void;
   isModal?: boolean;
+}
+
+// ─── Collapsible Section Component ───
+function SectionCard({
+  title,
+  icon,
+  defaultOpen = true,
+  children,
+  action,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+  action?: React.ReactNode;
+}) {
+  const theme = useTheme();
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <Card sx={{ mb: 2 }}>
+      <Box
+        onClick={() => setOpen((o) => !o)}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          px: 2.5,
+          py: 1.5,
+          cursor: 'pointer',
+          userSelect: 'none',
+          borderBottom: open ? `1px solid ${theme.palette.divider}` : 'none',
+          transition: 'background 0.15s',
+          '&:hover': { bgcolor: `${theme.palette.primary.main}08` },
+        }}
+      >
+        <Box sx={{ color: theme.palette.primary.main, display: 'flex', mr: 1 }}>{icon}</Box>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, flex: 1 }}>{title}</Typography>
+        {action && <Box onClick={(e) => e.stopPropagation()} sx={{ mr: 1 }}>{action}</Box>}
+        {open ? <ExpandLessIcon fontSize="small" sx={{ color: theme.palette.text.secondary }} /> : <ExpandMoreIcon fontSize="small" sx={{ color: theme.palette.text.secondary }} />}
+      </Box>
+      <Collapse in={open}>
+        <CardContent sx={{ pt: 2 }}>{children}</CardContent>
+      </Collapse>
+    </Card>
+  );
 }
 
 export default function BillDetail({ idProp, onClose, isModal }: BillDetailProps) {
@@ -83,6 +133,11 @@ export default function BillDetail({ idProp, onClose, isModal }: BillDetailProps
   const totalPaid = allocations.reduce((sum: number, p: any) => sum + p.amount, 0);
   const remaining = Math.max(0, bill.totalAmount - totalPaid);
 
+  // Group items by category
+  const rentItem = items.find((i) => i.itemType === 'rent');
+  const utilityItems = items.filter((i) => i.itemType === 'electricity' || i.itemType === 'water');
+  const serviceItems = items.filter((i) => !['rent', 'electricity', 'water'].includes(i.itemType));
+
   const handleAddPayment = async () => {
     if (!paymentAmount) return;
     try {
@@ -98,7 +153,7 @@ export default function BillDetail({ idProp, onClose, isModal }: BillDetailProps
       setPaymentNote('');
       loadData();
     } catch (err: any) {
-      alert("Lỗi: " + err.message);
+      alert('Lỗi: ' + err.message);
     }
   };
 
@@ -118,16 +173,15 @@ export default function BillDetail({ idProp, onClose, isModal }: BillDetailProps
     try {
       const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: theme.palette.background.paper });
       const filename = `HoaDon_P${roomNumber}_T${bill.month}_${bill.year}.png`;
-      
+
       canvas.toBlob(async (blob) => {
         if (!blob) {
-          alert("Không thể tạo file ảnh!");
+          alert('Không thể tạo file ảnh!');
           return;
         }
-        
+
         const file = new File([blob], filename, { type: 'image/png' });
-        
-        // 1. Try using Web Share API (Works natively on iOS/Android PWA)
+
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
             await navigator.share({
@@ -135,13 +189,12 @@ export default function BillDetail({ idProp, onClose, isModal }: BillDetailProps
               title: `Hóa đơn phòng ${roomNumber}`,
               text: `Gửi hóa đơn tiền nhà phòng ${roomNumber} tháng ${bill.month}/${bill.year}`,
             });
-            return; // Successfully opened native share menu (where user can "Save Image")
+            return;
           } catch (shareError) {
-            console.log("Share cancelled or failed", shareError);
+            console.log('Share cancelled or failed', shareError);
           }
         }
-        
-        // 2. Fallback to normal download (Works on PC/Android Chrome)
+
         const imageUrl = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = imageUrl;
@@ -152,7 +205,7 @@ export default function BillDetail({ idProp, onClose, isModal }: BillDetailProps
         setTimeout(() => URL.revokeObjectURL(imageUrl), 100);
       }, 'image/png');
     } catch (e: any) {
-      console.error("Lỗi chụp ảnh hóa đơn", e);
+      console.error('Lỗi chụp ảnh hóa đơn', e);
       alert(`Lỗi khi chụp ảnh hóa đơn: ${e.message}`);
     }
   };
@@ -178,76 +231,205 @@ export default function BillDetail({ idProp, onClose, isModal }: BillDetailProps
         <StatusBadge status={bill.status} type="bill" size="medium" />
       </Box>
 
-      <Grid container spacing={3}>
-        {/* Invoice Area */}
+      <Grid container spacing={2.5}>
+        {/* ─── Left Column: Bill Sections ─── */}
         <Grid size={{ xs: 12, md: 8 }}>
-          <Card id="invoice-print-area">
-            <CardContent sx={{ p: { xs: 2, md: 4 } }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 800 }}>HÓA ĐƠN TIỀN NHÀ</Typography>
-                  <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
-                    Kỳ: {formatMonthYear(bill.month, bill.year)}
-                  </Typography>
-                </Box>
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>Phòng {roomNumber}</Typography>
-                  <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
-                    Tạo ngày: {formatDate(bill.createdAt)}
-                  </Typography>
-                  {bill.dueDate && (
-                    <Typography variant="caption" sx={{ color: theme.palette.text.secondary, display: 'block' }}>
-                      Hạn chót: {formatDate(bill.dueDate)}
-                    </Typography>
-                  )}
-                </Box>
-              </Box>
+          {/* Summary Banner */}
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              p: 2,
+              mb: 2,
+              borderRadius: 2.5,
+              background: `linear-gradient(135deg, ${theme.palette.primary.main}18, ${theme.palette.primary.main}06)`,
+              border: `1px solid ${theme.palette.primary.main}30`,
+            }}
+          >
+            <Box>
+              <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>Tổng hóa đơn</Typography>
+              <Typography variant="h5" sx={{ fontWeight: 800, color: theme.palette.primary.main }}>
+                {formatCurrency(bill.totalAmount)}
+              </Typography>
+            </Box>
+            <Box sx={{ textAlign: 'right' }}>
+              <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>Còn lại</Typography>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 800, color: remaining > 0 ? theme.palette.error.main : theme.palette.success.main }}
+              >
+                {formatCurrency(remaining)}
+              </Typography>
+            </Box>
+          </Box>
 
-              <Divider sx={{ mb: 2 }} />
-
-              {/* Items List */}
-              <Box sx={{ mb: 4 }}>
-                <Grid container sx={{ mb: 1 }}>
-                  <Grid size={{ xs: 6, sm: 6 }}><Typography variant="caption" sx={{ fontWeight: 600, color: theme.palette.text.secondary }}>Nội dung</Typography></Grid>
-                  <Grid size={{ xs: 3, sm: 3 }}><Typography variant="caption" sx={{ fontWeight: 600, color: theme.palette.text.secondary, display: 'block', textAlign: 'right' }}>Đơn giá</Typography></Grid>
-                  <Grid size={{ xs: 3, sm: 3 }}><Typography variant="caption" sx={{ fontWeight: 600, color: theme.palette.text.secondary, display: 'block', textAlign: 'right' }}>Thành tiền</Typography></Grid>
+          {/* Section 1: Thông tin chung */}
+          <SectionCard title="Thông tin chung" icon={<InfoOutlinedIcon fontSize="small" />} defaultOpen={false}>
+            <Grid container spacing={1.5}>
+              {[
+                { label: 'Kỳ hóa đơn', value: formatMonthYear(bill.month, bill.year) },
+                { label: 'Phòng', value: `Phòng ${roomNumber}` },
+                { label: 'Ngày tạo', value: formatDate(bill.createdAt) },
+                { label: 'Hạn chót', value: bill.dueDate ? formatDate(bill.dueDate) : '—' },
+              ].map(({ label, value }) => (
+                <Grid size={{ xs: 6 }} key={label}>
+                  <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>{label}</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>{value}</Typography>
                 </Grid>
-                {items.map((item, idx) => (
-                  <Grid container key={idx} sx={{ mb: 1.5, alignItems: 'center' }}>
-                    <Grid size={{ xs: 6, sm: 6 }}><Typography variant="caption" component="div" sx={{ lineHeight: 1.2 }}>
-                      {item.description} {item.itemType === 'electricity' ? `(x${item.quantity} kWh)` : item.itemType === 'water' ? `(x${item.quantity} khối)` : item.quantity > 1 ? `(x${item.quantity})` : ''}
-                    </Typography></Grid>
-                    <Grid size={{ xs: 3, sm: 3 }}><Typography variant="caption" component="div" sx={{ textAlign: 'right' }}>{formatCurrency(item.unitPrice)}</Typography></Grid>
-                    <Grid size={{ xs: 3, sm: 3 }}><Typography variant="body2" component="div" sx={{ fontWeight: 700, textAlign: 'right', fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>{formatCurrency(item.amount)}</Typography></Grid>
-                  </Grid>
-                ))}
-              </Box>
-              
-              <Divider sx={{ mb: 2 }} />
+              ))}
+            </Grid>
+          </SectionCard>
 
-              {/* Total Summary */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', width: 250 }}>
-                  <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>Đã thanh toán:</Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>{formatCurrency(totalPaid)}</Typography>
+          {/* Section 2: Chi tiết tiền — printable area */}
+          <SectionCard
+            title="Chi tiết hóa đơn"
+            icon={<ReceiptLongIcon fontSize="small" />}
+            defaultOpen={true}
+          >
+            <Box id="invoice-print-area">
+              {/* Rent */}
+              {rentItem && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    Tiền phòng
+                  </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 0.5 }}>
+                    <Typography variant="body2">{rentItem.description}</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatCurrency(rentItem.amount)}</Typography>
+                  </Box>
                 </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', width: 250 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Cần thu:</Typography>
+              )}
+
+              {/* Utilities */}
+              {utilityItems.length > 0 && (
+                <>
+                  <Divider sx={{ my: 1.5 }} />
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                      Điện &amp; Nước
+                    </Typography>
+                    {utilityItems.map((item, idx) => (
+                      <Box key={idx} sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
+                        <Box>
+                          <Typography variant="body2">{item.description}</Typography>
+                          <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
+                            {formatCurrency(item.unitPrice)} × {item.quantity} {item.itemType === 'electricity' ? 'kWh' : 'khối'}
+                          </Typography>
+                        </Box>
+                        <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatCurrency(item.amount)}</Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </>
+              )}
+
+              {/* Services */}
+              {serviceItems.length > 0 && (
+                <>
+                  <Divider sx={{ my: 1.5 }} />
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                      Dịch vụ &amp; Chi phí khác
+                    </Typography>
+                    {serviceItems.map((item, idx) => (
+                      <Box key={idx} sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
+                        <Box>
+                          <Typography variant="body2">{item.description}</Typography>
+                          {item.quantity > 1 && (
+                            <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
+                              {formatCurrency(item.unitPrice)} × {item.quantity}
+                            </Typography>
+                          )}
+                        </Box>
+                        <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatCurrency(item.amount)}</Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </>
+              )}
+
+              <Divider sx={{ my: 2 }} />
+
+              {/* Totals */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>Tổng hóa đơn</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatCurrency(bill.totalAmount)}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>Đã thanh toán</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: theme.palette.success.main }}>- {formatCurrency(totalPaid)}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>Cần thu</Typography>
                   <Typography variant="subtitle1" sx={{ fontWeight: 800, color: remaining > 0 ? theme.palette.error.main : theme.palette.success.main }}>
                     {formatCurrency(remaining)}
                   </Typography>
                 </Box>
               </Box>
-            </CardContent>
-          </Card>
+            </Box>
+          </SectionCard>
+
+          {/* Section 3: Lịch sử thanh toán */}
+          <SectionCard
+            title="Lịch sử thanh toán"
+            icon={<PaymentsOutlinedIcon fontSize="small" />}
+            defaultOpen={allocations.length > 0}
+          >
+            {allocations.length === 0 ? (
+              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
+                Chưa có thanh toán nào
+              </Typography>
+            ) : (
+              allocations.map((p: any) => (
+                <Box
+                  key={p.id}
+                  sx={{
+                    mb: 1.5,
+                    p: 1.5,
+                    bgcolor: theme.palette.background.default,
+                    borderRadius: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                  }}
+                >
+                  <Box sx={{ flex: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatCurrency(p.amount)}</Typography>
+                      <Chip label={p.receipt?.method === 'cash' ? 'Tiền mặt' : 'CK'} size="small" variant="outlined" />
+                    </Box>
+                    <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
+                      {p.receipt?.recordedAt ? formatDate(p.receipt.recordedAt) : ''}
+                      {p.receipt?.note && ` • ${p.receipt.note}`}
+                    </Typography>
+                  </Box>
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={async () => {
+                      if (confirm('Xóa giao dịch này và hủy phân bổ?')) {
+                        await useReceiptStore.getState().deleteReceipt(p.receiptId);
+                        loadData();
+                      }
+                    }}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              ))
+            )}
+          </SectionCard>
         </Grid>
 
-        {/* Action / Payment Area */}
+        {/* ─── Right Column: Actions ─── */}
         <Grid size={{ xs: 12, md: 4 }}>
-          {/* Actions */}
-          <Card sx={{ mb: 2 }}>
+          <Card sx={{ position: { md: 'sticky' }, top: { md: 16 } }}>
             <CardContent>
-               <Button
+              <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700 }}>Thao tác</Typography>
+
+              <Button
                 variant="contained"
                 fullWidth
                 startIcon={<PaymentIcon />}
@@ -260,7 +442,18 @@ export default function BillDetail({ idProp, onClose, isModal }: BillDetailProps
               >
                 Ghi nhận thanh toán
               </Button>
-               <Button
+
+              <Button
+                variant="outlined"
+                fullWidth
+                startIcon={<EditIcon />}
+                onClick={() => navigate(`/bills/create?edit=${bill.id}`)}
+                sx={{ mb: 1.5 }}
+              >
+                Sửa hóa đơn
+              </Button>
+
+              <Button
                 variant="outlined"
                 fullWidth
                 startIcon={<CameraAltIcon />}
@@ -269,7 +462,8 @@ export default function BillDetail({ idProp, onClose, isModal }: BillDetailProps
               >
                 Chụp hóa đơn
               </Button>
-               <Button
+
+              <Button
                 variant="outlined"
                 fullWidth
                 startIcon={<PrintIcon />}
@@ -278,17 +472,10 @@ export default function BillDetail({ idProp, onClose, isModal }: BillDetailProps
               >
                 In hóa đơn
               </Button>
-               <Button
-                variant="outlined"
-                color="info"
-                fullWidth
-                startIcon={<EditIcon />}
-                onClick={() => navigate(`/bills/create?edit=${bill.id}`)}
-                sx={{ mb: 1.5 }}
-              >
-                Sửa hóa đơn
-              </Button>
-               <Button
+
+              <Divider sx={{ my: 1.5 }} />
+
+              <Button
                 variant="text"
                 color="error"
                 fullWidth
@@ -305,46 +492,8 @@ export default function BillDetail({ idProp, onClose, isModal }: BillDetailProps
               </Button>
             </CardContent>
           </Card>
-
-          {/* Payment History */}
-          <Card>
-            <CardContent>
-              <Typography variant="subtitle2" sx={{ mb: 2 }}>Lịch sử thanh toán</Typography>
-              {allocations.length === 0 ? (
-                <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>Chưa có thanh toán nào</Typography>
-              ) : (
-                allocations.map((p: any) => (
-                  <Box key={p.id} sx={{ mb: 2, p: 1.5, bgcolor: theme.palette.background.default, borderRadius: 2 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                      <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatCurrency(p.amount)}</Typography>
-                      <Chip label={p.receipt?.method === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'} size="small" variant="outlined" />
-                    </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
-                        {p.receipt?.recordedAt ? formatDate(p.receipt.recordedAt) : ''} {p.receipt?.note && `• ${p.receipt.note}`}
-                      </Typography>
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={async () => {
-                          if (confirm('Xóa giao dịch này và hủy phân bổ?')) {
-                            // Note: this deletes the entire receipt!
-                            await useReceiptStore.getState().deleteReceipt(p.receiptId);
-                            loadData();
-                          }
-                        }}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
-                  </Box>
-                ))
-              )}
-            </CardContent>
-          </Card>
         </Grid>
       </Grid>
-
 
       {/* Payment Dialog */}
       <Dialog open={paymentDialogOpen} onClose={() => setPaymentDialogOpen(false)} maxWidth="xs" fullWidth>
@@ -393,7 +542,6 @@ export default function BillDetail({ idProp, onClose, isModal }: BillDetailProps
         onConfirm={handleDeleteBill}
         onCancel={() => setDeleteBillDialogOpen(false)}
       />
-
     </Box>
   );
 }

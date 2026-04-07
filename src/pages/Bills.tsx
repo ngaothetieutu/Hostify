@@ -614,9 +614,9 @@ export default function Bills() {
             color="success"
             disabled={paying || paymentLoading || !payAmount}
             startIcon={paying ? <CircularProgress size={16} /> : <PaymentsIcon />}
-            sx={{ flex: 1 }}
+            sx={{ flex: 1, whiteSpace: 'nowrap' }}
           >
-            {paying ? 'Đang lưu...' : 'Xác nhận thu'}
+            {paying ? 'Đang lưu...' : 'Xác nhận'}
           </Button>
         </DialogActions>
       </Dialog>

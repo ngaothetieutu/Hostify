@@ -12,10 +12,12 @@ export default function Dashboard() {
   const theme = useTheme();
   const navigate = useNavigate();
   const { month: currentMonth, year: currentYear } = getCurrentMonthYear();
+  const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+  const prevYear = currentMonth === 1 ? currentYear - 1 : currentYear;
   const { buildings, fetchBuildings } = useBuildingStore();
   const { rooms, fetchRooms } = useRoomStore();
-  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
-  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [selectedMonth, setSelectedMonth] = useState(prevMonth);
+  const [selectedYear, setSelectedYear] = useState(prevYear);
   const [totalBilled, setTotalBilled] = useState(0);
   const [totalPaid, setTotalPaid] = useState(0);
   const [totalBillsCount, setTotalBillsCount] = useState(0);

@@ -58,9 +58,12 @@ export default function Bills() {
   const { serviceTypes } = useSettingsStore();
   const { createReceiptAndAllocate, isLoading: paymentLoading } = useReceiptStore();
 
+  const now = new Date();
+  const defaultMonth = now.getMonth() === 0 ? 12 : now.getMonth(); // T-1: getMonth() trả về 0-indexed
+
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [filterMonth, setFilterMonth] = useState<string>('all');
+  const [filterMonth, setFilterMonth] = useState<string>(String(defaultMonth));
   const [generatingMonth, setGeneratingMonth] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [snackbar, setSnackbar] = useState<{open: boolean, message: string, severity: 'success' | 'warning' | 'error'}>({ open: false, message: '', severity: 'success' });

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Box, Typography, CircularProgress, useTheme, IconButton } from '@mui/material';
+import { Box, Typography, CircularProgress, useTheme } from '@mui/material';
 import BackspaceIcon from '@mui/icons-material/BackspaceOutlined';
 import { supabase } from '../db/supabaseClient';
 import { useNavigate } from 'react-router-dom';

@@ -66,6 +66,13 @@ export default function Bills() {
   const [filterMonth, setFilterMonth] = useState<string>(String(defaultMonth));
   const [generatingMonth, setGeneratingMonth] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+
+  // Auto-generate dialog
+  const [genDialog, setGenDialog] = useState(false);
+  const [genMonth, setGenMonth] = useState(String(defaultMonth));
+  const [genYear, setGenYear] = useState(String(now.getFullYear()));
+  const [genPreview, setGenPreview] = useState<{ roomNumber: string; hasBill: boolean }[]>([]);
+  const [genPreviewing, setGenPreviewing] = useState(false);
   const [snackbar, setSnackbar] = useState<{open: boolean, message: string, severity: 'success' | 'warning' | 'error'}>({ open: false, message: '', severity: 'success' });
 
   // Quick payment dialog state
@@ -116,18 +123,47 @@ export default function Bills() {
     fetchBills();
   }, [fetchRooms, fetchBills]);
 
+  // Mở dialog chọn tháng/năm và preview phòng sẽ tạo HĐ
+  const openGenDialog = async () => {
+    setGenDialog(true);
+    await refreshPreview(Number(genMonth), Number(genYear));
+  };
+
+  const refreshPreview = async (month: number, year: number) => {
+    setGenPreviewing(true);
+    const preview = rooms
+      .filter(r => r.status === 'occupied')
+      .map(r => ({
+        roomNumber: r.roomNumber,
+        hasBill: bills.some(b => b.roomId === r.id && b.month === month && b.year === year),
+      }));
+    setGenPreview(preview);
+    setGenPreviewing(false);
+  };
+
+  const handleGenMonthChange = async (m: string) => {
+    setGenMonth(m);
+    await refreshPreview(Number(m), Number(genYear));
+  };
+
+  const handleGenYearChange = async (y: string) => {
+    setGenYear(y);
+    await refreshPreview(Number(genMonth), Number(y));
+  };
+
   const handleGenerateMonthBills = async () => {
     try {
       setGeneratingMonth(true);
-      const month = dayjs().month() + 1;
-      const year = dayjs().year();
-      const dueDate = dayjs().date(15).format('YYYY-MM-DD');
+      const month = Number(genMonth);
+      const year = Number(genYear);
+      // Ngày hạn nộp: 15 của tháng tạo HĐ
+      const dueDate = dayjs(`${year}-${String(month).padStart(2, '0')}-15`).format('YYYY-MM-DD');
 
       let generatedCount = 0;
 
       for (const room of rooms) {
         if (room.status !== 'occupied') continue;
-        
+
         const hasBill = bills.some(b => b.roomId === room.id && b.month === month && b.year === year);
         if (hasBill) continue;
 
@@ -174,18 +210,19 @@ export default function Bills() {
         await createBill({ roomId: room.id!, contractId: contract.id, year, month, items: newItems, dueDate });
         generatedCount++;
       }
-      
+
       await fetchBills();
+      setGenDialog(false);
 
       if (generatedCount === 0) {
-        alert(`Hoàn tất quét! Không có phòng nào đủ điều kiện để tạo hóa đơn mới (Lý do: Tất cả phòng đang trống, chưa có hợp đồng, hoặc đã có hóa đơn Tháng ${month}/${year}).`);
+        setSnackbar({ open: true, severity: 'warning', message: `Không có phòng nào mới cần tạo HĐ cho T${month}/${year} (đã tạo đủ hoặc không có hợp đồng).` });
       } else {
-        alert(`Tạo thành công ${generatedCount} hóa đơn cho Tháng ${month}!`);
+        setSnackbar({ open: true, severity: 'success', message: `✅ Đã tạo ${generatedCount} hóa đơn cho Tháng ${month}/${year}!` });
+        setFilterMonth(String(month));
       }
-
     } catch (e: any) {
-      console.error("Lỗi tạo hóa đơn tháng:", e);
-      alert(`Có lỗi xảy ra khi tạo HĐ (${e.message || 'Lỗi không xác định'})`);
+      console.error('Lỗi tạo hóa đơn tháng:', e);
+      setSnackbar({ open: true, severity: 'error', message: `Lỗi: ${e.message || 'Lỗi không xác định'}` });
     } finally {
       setGeneratingMonth(false);
     }
@@ -316,12 +353,11 @@ export default function Bills() {
               <Button 
                 variant="outlined" 
                 color="secondary"
-                startIcon={generatingMonth ? <CircularProgress size={20} /> : <FlashOnIcon />} 
-                onClick={handleGenerateMonthBills}
-                disabled={generatingMonth}
+                startIcon={<FlashOnIcon />} 
+                onClick={openGenDialog}
                 fullWidth
               >
-                {generatingMonth ? 'Đang tạo...' : 'Tạo tự động'}
+                Tạo tự động
               </Button>
             </Grid>
             <Grid size={{ xs: 6, sm: 'auto' }}>
@@ -568,6 +604,100 @@ export default function Bills() {
       )}
 
 
+
+      {/* ── Auto Generate Dialog ──────────────────────── */}
+      <Dialog open={genDialog} onClose={() => !generatingMonth && setGenDialog(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ pb: 1, fontWeight: 700 }}>
+          ⚡ Tạo hóa đơn tự động
+          <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', fontWeight: 400, mt: 0.5 }}>
+            Chọn tháng/năm cần tạo — bỏ qua phòng đã có hóa đơn
+          </Typography>
+        </DialogTitle>
+        <Divider />
+        <DialogContent sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {/* Month / Year picker */}
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <TextField
+              select
+              label="Tháng"
+              value={genMonth}
+              onChange={(e) => handleGenMonthChange(e.target.value)}
+              fullWidth
+              size="small"
+            >
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                <MenuItem key={m} value={String(m)}>Tháng {m}</MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              select
+              label="Năm"
+              value={genYear}
+              onChange={(e) => handleGenYearChange(e.target.value)}
+              fullWidth
+              size="small"
+            >
+              {Array.from({ length: 4 }, (_, i) => now.getFullYear() - 1 + i).map((y) => (
+                <MenuItem key={y} value={String(y)}>{y}</MenuItem>
+              ))}
+            </TextField>
+          </Box>
+
+          {/* Preview */}
+          <Box>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              Preview — Tháng {genMonth}/{genYear}
+            </Typography>
+            {genPreviewing ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                <CircularProgress size={24} />
+              </Box>
+            ) : genPreview.length === 0 ? (
+              <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>Không có phòng nào đang có khách</Typography>
+            ) : (
+              <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 0.5, maxHeight: 200, overflowY: 'auto' }}>
+                {genPreview.map((p) => (
+                  <Box key={p.roomNumber} sx={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    px: 1.5, py: 0.8, borderRadius: 1.5,
+                    bgcolor: p.hasBill ? 'action.hover' : 'primary.main' + '18',
+                    border: '1px solid',
+                    borderColor: p.hasBill ? 'divider' : 'primary.main' + '40',
+                  }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>Phòng {p.roomNumber}</Typography>
+                    <Box component="span" sx={{
+                      fontSize: '0.7rem', fontWeight: 700, px: 1, py: 0.3, borderRadius: 1,
+                      bgcolor: p.hasBill ? '#94a3b8' : '#3b82f6',
+                      color: '#fff',
+                    }}>
+                      {p.hasBill ? 'Đã có HĐ' : '✓ Sẽ tạo'}
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
+            )}
+            {genPreview.length > 0 && (
+              <Typography variant="caption" sx={{ mt: 1, display: 'block', color: 'text.secondary' }}>
+                {genPreview.filter(p => !p.hasBill).length} phòng sẽ được tạo ·{' '}
+                {genPreview.filter(p => p.hasBill).length} phòng đã có hóa đơn (bỏ qua)
+              </Typography>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button onClick={() => setGenDialog(false)} variant="outlined" disabled={generatingMonth} sx={{ flex: 1 }}>Hủy</Button>
+          <Button
+            onClick={handleGenerateMonthBills}
+            variant="contained"
+            color="secondary"
+            disabled={generatingMonth || genPreview.filter(p => !p.hasBill).length === 0}
+            startIcon={generatingMonth ? <CircularProgress size={16} /> : <FlashOnIcon />}
+            sx={{ flex: 1 }}
+          >
+            {generatingMonth ? 'Đang tạo...' : `Tạo ${genPreview.filter(p => !p.hasBill).length} hóa đơn`}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* ── Quick Pay Dialog ──────────────────────────── */}
       <Dialog open={payDialog.open} onClose={closePayDialog} maxWidth="xs" fullWidth>

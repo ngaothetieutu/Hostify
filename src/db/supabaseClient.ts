@@ -5,7 +5,9 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: window.sessionStorage, // Use sessionStorage instead of localStorage so session is cleared when tab/app is closed
+    // Dùng localStorage để session tồn tại khi đóng/mở tab
+    // → không phải nhập PIN lại mỗi lần, giảm nguy cơ bị Supabase rate-limit lock
+    storage: window.localStorage,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
